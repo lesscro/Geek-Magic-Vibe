@@ -48,7 +48,7 @@ Deux tâches planifiées Windows :
 
 ```bash
 # déjà fait par l'installateur ; à la main (adaptez le chemin) :
-schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "\"C:\chemin\.venv\Scripts\pythonw.exe\" \"C:\chemin\scriptsefresh_all.py\""
+schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "\"C:emin.venvScriptspythonw.exe\" \"C:eminscriptsefresh_all.py\""
 schtasks /Create /SC MINUTE /MO 1 /TN GeekMagicClock /TR "\"C:\chemin\.venv\Scripts\pythonw.exe\" \"C:\chemin\scripts\send_clock.py\""
 ```
 
