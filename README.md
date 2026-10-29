@@ -10,6 +10,28 @@ Dashboard pixel art pour écran **GeekMagic** (240x240, firmware GeekMagicClock 
 - **Météo** : une scène pixel art plein cadre par lieu, qui change chaque jour parmi 12 décors du quotidien (ville, café, marché, pont, parc, aire de jeux, pique-nique, lac, montagnes, ferme, port, plage) et s'adapte au moment de la journée, à la météo et à la saison. Données Open-Meteo, aucune clé.
 - **Horloge** style HTC Sense : tuiles à volets, date, météo animée dessous, effet d'entrée aléatoire.
 
+## Aperçu
+
+Les cards telles qu'elles s'affichent sur l'écran (agrandies x2) :
+
+![Cards crypto](docs/screenshots/cards-crypto.png)
+
+![Scènes météo de jour](docs/screenshots/cards-meteo-jour.png)
+
+![Scènes météo selon le moment et le temps](docs/screenshots/cards-meteo-moments.png)
+
+![Horloge style HTC Sense](docs/screenshots/card-horloge.png)
+
+Le backoffice :
+
+![Backoffice, cryptos](docs/screenshots/backoffice-cryptos.png)
+
+![Backoffice, météo et simulateur](docs/screenshots/backoffice-meteo.png)
+
+![Backoffice, horloge](docs/screenshots/backoffice-horloge.png)
+
+Pour régénérer les captures des cards : `python scripts/make_screenshots.py`.
+
 ## Installation en 3 étapes (Windows)
 
 Prérequis : [Python 3.11+](https://www.python.org/downloads/) (cochez « Add Python to PATH »), Git, et l'écran allumé sur le même réseau Wi-Fi ou Ethernet que le PC.
@@ -48,7 +70,8 @@ Deux tâches planifiées Windows :
 
 ```bash
 # déjà fait par l'installateur ; à la main (adaptez le chemin) :
-schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "\"C:emin.venvScriptspythonw.exe\" \"C:eminscriptsefresh_all.py\""
+schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "\"C:\chemin\.venv\Scripts\pythonw.exe\" \"C:\chemin\scripts\refresh_all.py\""
+efresh_all.py\""
 schtasks /Create /SC MINUTE /MO 1 /TN GeekMagicClock /TR "\"C:\chemin\.venv\Scripts\pythonw.exe\" \"C:\chemin\scripts\send_clock.py\""
 ```
 

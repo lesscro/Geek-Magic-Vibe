@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = ROOT / "config.json"
+CONFIG_PATH = Path(os.environ.get("GMV_CONFIG") or ROOT / "config.json")
 
 KINDS = ("clock", "weather", "crypto")
 SCENES = ["city", "cafe", "market", "bridge", "park", "playground", "picnic", "lake",

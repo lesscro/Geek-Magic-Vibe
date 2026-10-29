@@ -31,7 +31,7 @@ from geekmagic import data, pipeline, places, render, scenes, settings, weather 
 from geekmagic.client import GeekMagicClient, GeekMagicError  # noqa: E402
 from scripts import send_clock, send_tokens, send_weather  # noqa: E402
 
-PORT = 8780
+PORT = int(__import__("os").environ.get("GMV_PORT") or 8780)
 (ROOT / "output").mkdir(exist_ok=True)
 (ROOT / "logs").mkdir(exist_ok=True)
 STATIC = Path(__file__).resolve().parent / "static"
