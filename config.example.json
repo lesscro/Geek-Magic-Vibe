@@ -1,0 +1,113 @@
+{
+  "device": {
+    "ip": "192.168.1.100",
+    "refresh_minutes": 9
+  },
+  "resolution": [
+    240,
+    240
+  ],
+  "crypto": {
+    "cycle": 10,
+    "tokens": [
+      {
+        "pair": "BTC/USDT",
+        "enabled": true
+      },
+      {
+        "pair": "ETH/USDT",
+        "enabled": true
+      },
+      {
+        "pair": "SOL/USDT",
+        "enabled": true
+      },
+      {
+        "pair": "AAVE/USDT",
+        "enabled": true
+      },
+      {
+        "pair": "ONDO/USDT",
+        "enabled": true
+      },
+      {
+        "pair": "ENA/USDT",
+        "enabled": true
+      },
+      {
+        "pair": "HYPE/USDT",
+        "enabled": true
+      }
+    ]
+  },
+  "weather": {
+    "scenes_enabled": [
+      "city",
+      "cafe",
+      "market",
+      "bridge",
+      "park",
+      "playground",
+      "picnic",
+      "lake",
+      "mountains",
+      "farm",
+      "harbor",
+      "beach"
+    ],
+    "locations": [
+      {
+        "id": "paris",
+        "city": "Paris",
+        "lat": 48.8566,
+        "lon": 2.3522,
+        "timezone": "Europe/Paris",
+        "enabled": true,
+        "scene": "auto"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "Europe/Paris",
+    "night_start": 22,
+    "night_end": 7,
+    "effect": "random",
+    "show_weather": true,
+    "location": "paris"
+  },
+  "schedule": {
+    "order": [
+      "clock",
+      "weather",
+      "crypto"
+    ],
+    "clock": {
+      "enabled": true,
+      "slots": [
+        [
+          "00:00",
+          "24:00"
+        ]
+      ]
+    },
+    "weather": {
+      "enabled": true,
+      "slots": [
+        [
+          "00:00",
+          "24:00"
+        ]
+      ]
+    },
+    "crypto": {
+      "enabled": true,
+      "slots": [
+        [
+          "00:00",
+          "24:00"
+        ]
+      ]
+    }
+  },
+  "device_ip": "192.168.1.100"
+}

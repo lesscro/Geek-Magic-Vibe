@@ -1,0 +1,21 @@
+# Configuration locale (IP, lieu...) : partir de config.example.json
+config.json
+
+# Fichiers générés
+output/
+logs/
+__pycache__/
+*.pyc
+
+# Sauvegardes et contenus personnels
+backup_device/
+fonts/*.ttf
+.claude/
+*.local.*
+
+# Divers
+.venv/
+.env
+.DS_Store
+Thumbs.db
+BOT-INTERFACE.md
