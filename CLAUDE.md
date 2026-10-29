@@ -1,18 +1,19 @@
 # Geek Magic Vibe
 
-Dashboard pixel art 240x240 pour écran GeekMagic (HTTP local uniquement), piloté par Python, avec backoffice FastAPI. Voir `README.md` et `docs/DESIGN.md`.
+Pixel-art dashboard for GeekMagic 240x240 displays (local HTTP only), driven by Python, with a FastAPI backoffice. See `README.md` and `docs/DESIGN.md`.
 
-## Règles de travail
+## Working rules
 
-- Config unique : `config.json` (non versionné). Schéma, migration et validation dans `geekmagic/settings.py`. Ne jamais committer de config réelle : partir de `config.example.json`.
-- Tout envoi passe par `geekmagic/pipeline.py` (verrou inter-processus, nettoyage des fichiers périmés). Les scripts `send_*.py` et `refresh_all.py` en sont des wrappers.
-- Erreurs réseau de l'écran : toujours encapsulées dans `GeekMagicError`.
-- L'écran est mono-tâche : ne pas le sonder pendant un envoi.
-- Après modification du rendu, générer un aperçu (`scripts/prev_clock.py`, ou les endpoints `/api/preview/...`) et le regarder avant d'envoyer.
-- Aucune donnée personnelle dans le dépôt : IP, coordonnées, SSID, mots de passe, clés API restent dans `config.json` ou l'environnement.
+- Single config: `config.json` (not committed). Schema, migration and validation live in `geekmagic/settings.py`. Never commit a real config: start from `config.example.json`.
+- Every send goes through `geekmagic/pipeline.py` (cross-process lock, cleanup of stale files). `send_*.py` and `refresh_all.py` are thin wrappers around it.
+- Network errors from the display are always wrapped in `GeekMagicError`.
+- The display handles one request at a time: do not probe it during a send.
+- After changing rendering, generate a preview (`scripts/prev_clock.py`, or the `/api/preview/...` endpoints) and look at it before sending.
+- No personal data in the repository: IPs, coordinates, SSIDs, passwords and API keys stay in `config.json` or the environment.
+- Languages: English is the source language. Backoffice texts go through `t('English text')` with translations in `backoffice/static/i18n/<lang>.json`; texts drawn on the display come from `geekmagic/i18n.py`. Code comments may be in French or English.
 
-## Matériel
+## Hardware
 
-- JPG et GIF uniquement, 240x240. Un GIF de même nom n'est pas écrasé : noms alternés `…1.gif` / `…2.gif`.
-- `/delete` répond parfois `Fail` alors que la suppression a lieu : vérifier via `/filelist` (cache d'environ 1 s).
-- Pour toute question d'API sans doc officielle : s'appuyer sur les dépôts communautaires HelloCubic-Lite et qurle/smalltv.
+- JPG and GIF only, 240x240. A GIF with the same name is not overwritten: alternate names `…1.gif` / `…2.gif`.
+- `/delete` sometimes answers `Fail` although the deletion happened: verify through `/filelist` (about 1 s cache).
+- For API questions without official docs, rely on the community repositories HelloCubic-Lite and qurle/smalltv.

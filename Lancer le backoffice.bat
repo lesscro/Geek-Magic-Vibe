@@ -1,5 +1,5 @@
 @echo off
-rem Lance le backoffice GeekMagic (http://localhost:8780) puis ouvre le navigateur.
+rem Starts the GeekMagic backoffice (http://localhost:8780) and opens the browser.
 cd /d "%~dp0"
 set "PYW=.venv\Scripts\pythonw.exe"
 if not exist "%PYW%" set "PYW=pythonw"

@@ -1,36 +1,38 @@
 # Product
 
+[English](PRODUCT.md) | [Français](PRODUCT.fr.md)
+
 ## Register
 
 product
 
 ## Users
 
-Une seule personne, le propriétaire de l’écran GeekMagic, sur son PC Windows ou son téléphone via le réseau local. Elle veut régler l'écran sans toucher au code : quels tokens, quelle ville, quels créneaux, et voir tout de suite ce que ça donne.
+One person, the owner of the GeekMagic display, on their Windows PC or their phone over the local network. They want to set up the display without touching code: which tokens, which city, which time slots, and to see the result right away.
 
 ## Product Purpose
 
-Backoffice local (mini serveur sur le PC) qui pilote la configuration de l'écran 240x240 : cards crypto, météo à scènes pixel art, horloge HTC Sense, écran et planning. Succès : ajouter un token ou une ville en moins de 15 secondes, avec un aperçu pixel perfect fidèle à l'écran avant d'envoyer.
+A local backoffice (a small server on the PC) that drives the configuration of the 240x240 display: crypto cards, pixel-art weather scenes, an HTC Sense clock, and screen and schedule settings. Success: adding a token or a city in under 15 seconds, with a pixel-perfect preview faithful to the display before sending.
 
 ## Brand Personality
 
-Cockpit ludique premium. Chaleureux, direct, tactile. Formes très arrondies et ressorts Material 3 Expressive, ambre et bleu électrique sur fond sombre profond. Trois mots : précis, joueur, rassurant.
+Playful premium cockpit. Warm, direct, tactile. Very rounded shapes and Material 3 Expressive motion, amber and electric blue on a deep dark background. Three words: precise, playful, reassuring.
 
 ## Anti-references
 
-- Tableau d'administration Bootstrap : tableaux gris, formulaires empilés, aucun aperçu visuel.
-- Fouillis de réglages : tout sur une page, jargon technique, aucune valeur par défaut sensée.
-- Glassmorphism gratuit : flous décoratifs au détriment de la lisibilité.
-- Modèles d'IA génériques : cartes identiques, dégradés violets, gros chiffres sans sens.
+- Bootstrap admin panel: gray tables, stacked forms, no visual preview.
+- Settings clutter: everything on one page, technical jargon, no sensible defaults.
+- Gratuitous glassmorphism: decorative blur at the expense of legibility.
+- Generic AI templates: identical cards, purple gradients, big numbers with no meaning.
 
 ## Design Principles
 
-1. L'aperçu d'abord : chaque réglage montre son effet sur l'écran avant l'envoi.
-2. Une tâche par écran : cryptos, météo, horloge, écran et planning sont séparés, jamais mélangés.
-3. Valeurs par défaut sensées : l'écran fonctionne sans rien régler, les options avancées restent repliées.
-4. Retour tactile immédiat : chaque action répond par un mouvement court et un message clair, en français simple.
-5. Fidélité au matériel : le pixel perfect et la limite mémoire de l'écran guident l'interface.
+1. Preview first: every setting shows its effect on the display before sending.
+2. One task per screen: crypto, weather, clock, screen and schedule are separate, never mixed.
+3. Sensible defaults: the display works without any setup, advanced options stay folded.
+4. Immediate tactile feedback: every action answers with a short motion and a clear message in plain language.
+5. Faithful to the hardware: pixel perfection and the display's memory limit guide the interface.
 
 ## Accessibility & Inclusion
 
-Contraste WCAG AA, focus visibles, navigation clavier complète, mouvement réduit respecté (`prefers-reduced-motion`). Priorité grand écran (1280 px et plus), repli propre jusqu'au téléphone. Interface en français uniquement.
+WCAG AA contrast, visible focus, full keyboard navigation, reduced motion respected (`prefers-reduced-motion`). Large-screen first (1280 px and up), clean fallback down to a phone. Interface in English and French.

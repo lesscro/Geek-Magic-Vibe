@@ -92,7 +92,7 @@ def _coingecko(pair: str, interval: str, limit: int) -> MarketSnapshot:
     base_sym = pair.split("/")[0].upper()
     cg_id = _CG_IDS.get(base_sym)
     if not cg_id:
-        raise DataError(f"Pas d'ID CoinGecko pour {base_sym} — ajoutez-le à _CG_IDS.")
+        raise DataError(f"No CoinGecko ID for {base_sym}: add it to _CG_IDS.")
     days = _CG_DAYS.get(interval, 1)
     ohlc = _get_json(f"https://api.coingecko.com/api/v3/coins/{cg_id}/ohlc?vs_currency=usd&days={days}")
     candles = [Candle(ts, o, h, l, c) for ts, o, h, l, c in ohlc][-limit:]

@@ -136,7 +136,7 @@ def get_weather(location: dict | None = None) -> WeatherSnapshot:
     else:
         geo = _get_json("http://ip-api.com/json/?fields=status,lat,lon,city,timezone")
         if geo.get("status") != "success":
-            raise WeatherError(f"Geoloc IP échouée : {geo}")
+            raise WeatherError(f"IP geolocation failed: {geo}")
 
     tz = ZoneInfo(geo["timezone"])
     wx = _get_json(

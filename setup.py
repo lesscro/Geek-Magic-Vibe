@@ -1,11 +1,11 @@
-"""Installation guidée de Geek Magic Vibe : un seul script après `git clone`.
+"""Guided installation of Geek Magic Vibe: one script after `git clone`.
 
-    python setup.py              # installation interactive
-    python setup.py --yes        # accepte tout (tâches planifiées incluses sous Windows)
-    python setup.py --no-scan    # ne cherche pas l'écran sur le réseau
+    python setup.py              # interactive install
+    python setup.py --yes        # accept everything (scheduled tasks included on Windows)
+    python setup.py --no-scan    # do not look for the screen on the network
 
-Étapes : environnement virtuel (.venv) -> dépendances -> polices pixel ->
-config.json -> recherche de l'écran -> (Windows) tâches planifiées -> test.
+Steps: virtual environment (.venv) -> dependencies -> pixel fonts ->
+config.json -> screen discovery -> (Windows) scheduled tasks.
 """
 
 from __future__ import annotations
@@ -34,78 +34,78 @@ def run(*cmd: str | Path, check: bool = True) -> int:
 def ask(question: str, default_yes: bool, yes: bool) -> bool:
     if yes:
         return True
-    suffix = "[O/n]" if default_yes else "[o/N]"
+    suffix = "[Y/n]" if default_yes else "[y/N]"
     answer = input(f"{question} {suffix} ").strip().lower()
     return default_yes if not answer else answer in ("o", "oui", "y", "yes")
 
 
 def install_tasks() -> None:
-    """Deux tâches Windows : cryptos+météo toutes les 9 min, horloge chaque minute."""
+    """Two Windows tasks: crypto + weather every 9 min, clock every minute."""
     jobs = [("GeekMagicDashRefresh", 9, "refresh_all.py"), ("GeekMagicClock", 1, "send_clock.py")]
     for name, every, script in jobs:
         tr = f'"{PYW}" "{ROOT / "scripts" / script}"'
         rc = subprocess.run(["schtasks", "/Create", "/F", "/SC", "MINUTE", "/MO", str(every), "/TN", name, "/TR", tr],
                             cwd=ROOT, capture_output=True, text=True)
-        print(f"    {'OK ' if rc.returncode == 0 else 'ECHEC'} {name} (toutes les {every} min)"
+        print(f"    {'OK ' if rc.returncode == 0 else 'ECHEC'} {name} (every {every} min)"
               + ("" if rc.returncode == 0 else f" : {rc.stderr.strip()}"))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--yes", action="store_true", help="répond oui à toutes les questions")
-    ap.add_argument("--no-scan", action="store_true", help="ne cherche pas l'écran sur le réseau")
+    ap.add_argument("--yes", action="store_true", help="answer yes to every question")
+    ap.add_argument("--no-scan", action="store_true", help="do not look for the screen on the network")
     args = ap.parse_args()
     total = 6
 
     if sys.version_info < (3, 11):
-        print(f"[!] Python 3.11 ou plus requis (version actuelle : {sys.version.split()[0]}).")
+        print(f"[!] Python 3.11 or newer is required (current version: {sys.version.split()[0]}).")
         return 1
-    print("Geek Magic Vibe : installation")
+    print("Geek Magic Vibe: installation")
     for d in ("output", "logs"):
         (ROOT / d).mkdir(exist_ok=True)
 
-    step(1, total, "Environnement virtuel (.venv)")
+    step(1, total, "Virtual environment (.venv)")
     if not PY.exists():
         run(sys.executable, "-m", "venv", VENV)
     print("    ok")
 
-    step(2, total, "Dépendances (Pillow, requests, FastAPI, uvicorn)")
+    step(2, total, "Dependencies (Pillow, requests, FastAPI, uvicorn)")
     run(PY, "-m", "pip", "install", "--quiet", "--upgrade", "pip")
     run(PY, "-m", "pip", "install", "--quiet", "-r", ROOT / "requirements.txt")
     print("    ok")
 
-    step(3, total, "Polices pixel (Press Start 2P, Silkscreen : licence OFL)")
+    step(3, total, "Pixel fonts (Press Start 2P, Silkscreen: OFL license)")
     if not (ROOT / "fonts" / "PressStart2P-Regular.ttf").exists():
         if run(PY, ROOT / "scripts" / "setup_fonts.py", check=False) != 0:
-            print("[!] Téléchargement impossible : relancez setup.py avec une connexion Internet.")
+            print("[!] Download failed: rerun setup.py with an Internet connection.")
             return 1
     else:
-        print("    déjà présentes")
+        print("    already present")
 
     step(4, total, "Configuration (config.json)")
     cfg = ROOT / "config.json"
     if not cfg.exists():
         cfg.write_text((ROOT / "config.example.json").read_text(encoding="utf-8"), encoding="utf-8")
-        print("    config.json créé à partir de config.example.json")
+        print("    config.json created from config.example.json")
     else:
-        print("    config.json existe déjà, conservé")
+        print("    config.json already exists, kept")
 
-    step(5, total, "Recherche de l'écran sur le réseau")
+    step(5, total, "Looking for the screen on the network")
     if args.no_scan:
-        print("    ignorée (--no-scan) : renseignez l'IP dans le backoffice")
+        print("    skipped (--no-scan): enter the IP in the backoffice")
     elif run(PY, ROOT / "scripts" / "find_device.py", check=False) != 0:
-        print("    écran non trouvé : vous pourrez saisir son IP dans le backoffice (Écran et planning)")
+        print("    screen not found: you can enter its IP in the backoffice (Screen and schedule)")
 
-    step(6, total, "Mise à jour automatique (tâches planifiées Windows)")
-    if WIN and ask("Installer les tâches planifiées (cryptos et météo toutes les 9 min, horloge chaque minute) ?", True, args.yes):
+    step(6, total, "Automatic updates (Windows scheduled tasks)")
+    if WIN and ask("Install the scheduled tasks (crypto and weather every 9 min, clock every minute)?", True, args.yes):
         install_tasks()
     else:
-        print("    ignorée")
+        print("    skipped")
 
-    print("\nTerminé. Lancez le backoffice :")
-    print("    Windows : double-clic sur 'Lancer le backoffice.bat'" if WIN else f"    {PY} backoffice/server.py")
-    print("    puis ouvrez http://localhost:8780")
-    if ask("Lancer le backoffice maintenant ?", True, False):
+    print("\nDone. Start the backoffice:")
+    print("    Windows: double-click 'Lancer le backoffice.bat'" if WIN else f"    {PY} backoffice/server.py")
+    print("    then open http://localhost:8780")
+    if ask("Start the backoffice now?", True, False):
         if WIN:
             os.startfile(ROOT / "Lancer le backoffice.bat")  # type: ignore[attr-defined]
         else:

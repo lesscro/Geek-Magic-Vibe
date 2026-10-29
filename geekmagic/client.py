@@ -92,20 +92,20 @@ class GeekMagicClient:
         except OSError as exc:
             raise GeekMagicError(f"Upload impossible vers {self.base} : {exc}") from exc
         if status != 200 or "FAIL" in text.upper():
-            raise GeekMagicError(f"Upload refusé (HTTP {status}) : {text[:200]}")
+            raise GeekMagicError(f"Upload refused (HTTP {status}): {text[:200]}")
         return name
 
     def set_theme(self, n: int) -> None:
         """Change le thème (3 = Photo Album, requis pour afficher nos images)."""
         r = self._get("/set", params={"theme": n})
         if "OK" not in r.text.upper():
-            raise GeekMagicError(f"Changement de thème {n} refusé : {r.text[:100]}")
+            raise GeekMagicError(f"Theme change {n} refused: {r.text[:100]}")
 
     def set_album(self, autoplay: bool = True, interval_s: int = 5) -> None:
         """Configure le cycle du Photo Album."""
         r = self._get("/set", params={"autoplay": int(autoplay), "i_i": interval_s})
         if "OK" not in r.text.upper():
-            raise GeekMagicError(f"Configuration album refusée : {r.text[:100]}")
+            raise GeekMagicError(f"Album configuration refused: {r.text[:100]}")
 
     def delete(self, name: str, directory: str = "image") -> None:
         """Supprime un fichier. NB : réponse 'Fail' peu fiable — vérifier /filelist."""
@@ -117,7 +117,7 @@ class GeekMagicClient:
         Le PNG n'est pas supporté par le firmware ; convertir avant si besoin.
         """
         if filepath.lower().endswith(".png"):
-            raise GeekMagicError("PNG non supporté par le firmware — convertir en JPG d'abord.")
+            raise GeekMagicError("PNG is not supported by the firmware: convert to JPG first.")
         self.upload(filepath, "/image", name)
 
     # ---------------------------------------------------------------- statut
@@ -128,7 +128,7 @@ class GeekMagicClient:
         try:
             return r.json()
         except ValueError as exc:
-            raise GeekMagicError(f"Réponse non-JSON de /space.json : {r.text[:200]}") from exc
+            raise GeekMagicError(f"Non-JSON response from /space.json: {r.text[:200]}") from exc
 
     def status(self, key: str = "config") -> dict:
         """Lit un des fichiers d'état (/config.json, /spaces.json, ...)."""
@@ -136,7 +136,7 @@ class GeekMagicClient:
         try:
             return r.json()
         except ValueError as exc:
-            raise GeekMagicError(f"Réponse non-JSON de /{key}.json : {r.text[:200]}") from exc
+            raise GeekMagicError(f"Non-JSON response from /{key}.json: {r.text[:200]}") from exc
 
     def list_images(self) -> str:
         """Liste les images présentes (réponse HTML brute du firmware)."""

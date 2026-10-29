@@ -29,7 +29,7 @@ def main() -> int:
         download(PRESS_START_2P, FONTS_DIR / "PressStart2P-Regular.ttf")
         download(SILKSCREEN, FONTS_DIR / "Silkscreen-Regular.ttf")
     except Exception as exc:  # noqa: BLE001
-        print(f"[!] Téléchargement échoué : {exc}", file=sys.stderr)
+        print(f"[!] Download failed: {exc}", file=sys.stderr)
         return 1
     return 0
 

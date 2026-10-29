@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -34,41 +34,41 @@
   </defs>
 </svg>
 
-<a class="skip" href="#main">Aller au contenu</a>
+<a class="skip" href="#main" data-i18n="Skip to content">Skip to content</a>
 
 <div class="shell">
-  <nav class="rail" aria-label="Navigation principale">
-    <a class="logo" href="#/overview" aria-label="GeekMagic, accueil"><span>G</span></a>
+  <nav class="rail" aria-label="Main navigation" data-i18n-aria="Main navigation">
+    <a class="logo" href="#/overview" aria-label="GeekMagic, home" data-i18n-aria="GeekMagic, home"><span>G</span></a>
     <ul class="rail-list">
-      <li><a class="rail-btn" data-route="overview" href="#/overview"><svg class="ic"><use href="#i-grid"/></svg><span class="rail-label">Vue d'ensemble</span></a></li>
-      <li><a class="rail-btn" data-route="crypto" href="#/crypto"><svg class="ic"><use href="#i-coin"/></svg><span class="rail-label">Cryptos</span></a></li>
-      <li><a class="rail-btn" data-route="weather" href="#/weather"><svg class="ic"><use href="#i-weather"/></svg><span class="rail-label">Météo</span></a></li>
-      <li><a class="rail-btn" data-route="clock" href="#/clock"><svg class="ic"><use href="#i-clock"/></svg><span class="rail-label">Horloge</span></a></li>
-      <li><a class="rail-btn" data-route="screen" href="#/screen"><svg class="ic"><use href="#i-screen"/></svg><span class="rail-label">Écran et planning</span></a></li>
+      <li><a class="rail-btn" data-route="overview" href="#/overview"><svg class="ic"><use href="#i-grid"/></svg><span class="rail-label" data-i18n="Overview">Overview</span></a></li>
+      <li><a class="rail-btn" data-route="crypto" href="#/crypto"><svg class="ic"><use href="#i-coin"/></svg><span class="rail-label" data-i18n="Crypto">Crypto</span></a></li>
+      <li><a class="rail-btn" data-route="weather" href="#/weather"><svg class="ic"><use href="#i-weather"/></svg><span class="rail-label" data-i18n="Weather">Weather</span></a></li>
+      <li><a class="rail-btn" data-route="clock" href="#/clock"><svg class="ic"><use href="#i-clock"/></svg><span class="rail-label" data-i18n="Clock">Clock</span></a></li>
+      <li><a class="rail-btn" data-route="screen" href="#/screen"><svg class="ic"><use href="#i-screen"/></svg><span class="rail-label" data-i18n="Screen and schedule">Screen and schedule</span></a></li>
     </ul>
-    <div class="rail-foot" id="rail-status" title="État de l'écran"><span class="dot" id="rail-dot"></span></div>
+    <div class="rail-foot" id="rail-status" title="Screen status" data-i18n-title="Screen status"><span class="dot" id="rail-dot"></span></div>
   </nav>
 
   <main class="main" id="main" tabindex="-1">
     <header class="top">
       <div>
         <p class="eyebrow" id="page-eyebrow"></p>
-        <h1 id="page-title">Vue d'ensemble</h1>
+        <h1 id="page-title">Overview</h1>
       </div>
       <button class="btn btn-primary" id="send-btn" type="button">
-        <svg class="ic"><use href="#i-send"/></svg><span>Envoyer sur l'écran</span>
+        <svg class="ic"><use href="#i-send"/></svg><span data-i18n="Send to screen">Send to screen</span>
       </button>
     </header>
     <div id="view" class="view"></div>
   </main>
 
-  <aside class="side" aria-label="Rotation de l'écran">
+  <aside class="side" aria-label="Screen rotation" data-i18n-aria="Screen rotation">
     <div id="side"></div>
   </aside>
 </div>
 
 <div class="snack" id="snack" role="status" aria-live="polite"></div>
-<div class="sheet" id="sheet" role="dialog" aria-modal="false" aria-label="Envoi vers l'écran" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="false" aria-label="Sending to the screen" data-i18n-aria="Sending to the screen" hidden></div>
 
 <script type="module" src="app.js"></script>
 </body>

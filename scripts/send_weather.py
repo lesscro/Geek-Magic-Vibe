@@ -41,7 +41,7 @@ def main() -> int:
     try:
         pipeline.run(cfg, ["weather"])
     except GeekMagicError as exc:
-        print(f"[!] Échec push : {exc}")
+        print(f"[!] Push failed: {exc}")
         return 1
     return 0
 

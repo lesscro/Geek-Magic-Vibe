@@ -12,7 +12,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .render import BG, CONDITION_FR, _font_cache, _gradient_bg
+from . import i18n
+from .render import BG, _font_cache, _gradient_bg
 
 WIN_FONTS = Path("C:/Windows/Fonts")
 
@@ -20,11 +21,6 @@ TILE_W, TILE_H = 44, 84
 TILE_X = [10, 62, 134, 186]
 TILE_Y = 8
 FLIP_FRAMES = 6
-
-FR_DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
-FR_MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
-             "septembre", "octobre", "novembre", "décembre"]
-
 
 def sense_font(size: int, weight: str = "light") -> ImageFont.FreeTypeFont:
     names = {"light": "segoeuil.ttf", "semi": "segoeuisl.ttf", "reg": "segoeui.ttf"}
@@ -142,7 +138,7 @@ def _weather_panel(w, step: int, size: tuple[int, int], box_x: int) -> Image.Ima
     outline = (12, 20, 44)
     pd.text((16, 6), f"{w.temp:.0f}°", font=sense_font(58), fill=(255, 255, 255),
             stroke_width=2, stroke_fill=outline)
-    cond = CONDITION_FR.get(w.icon, w.icon).capitalize()
+    cond = i18n.condition(w.icon).capitalize()
     pd.text((18, ph - 28), cond, font=sense_font(17, "semi"), fill=(255, 255, 255),
             stroke_width=2, stroke_fill=outline)
     fcity = sense_font(13, "semi")
@@ -175,7 +171,7 @@ def draw_clock_card(img: Image.Image, hh: int, mm: int, step: int = 0, now=None,
         d.rectangle([116, cy, 123, cy + 7], fill=dot)
 
     if now is not None:
-        label = f"{FR_DAYS[now.weekday()]} {now.day} {FR_MONTHS[now.month - 1]}"
+        label = i18n.date_label(now)
         f = sense_font(17, "semi")
         d.text((120 - d.textlength(label, font=f) / 2, 98), label, font=f, fill=(196, 204, 220))
     d.line([(14, 123), (226, 123)], fill=(40, 48, 70))

@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from .data import MarketSnapshot
-from . import sprites
+from . import i18n, sprites
 
 ROOT = Path(__file__).resolve().parent.parent
 FONTS = ROOT / "fonts"
@@ -245,12 +245,6 @@ def draw_token_card(img: Image.Image, snap: MarketSnapshot, step: int = 0) -> No
 # Scène pixel art plein cadre (lieu du jour x moment x météo), infos lisibles
 # au premier plan : icône + condition, température géante.
 
-CONDITION_FR = {
-    "SUN": "ENSOLEILLE", "MOON": "NUIT CLAIRE", "PARTLY": "ECLAIRCIES", "CLOUD": "COUVERT",
-    "RAIN": "PLUIE", "STORM": "ORAGE", "SNOW": "NEIGE", "FOG": "BROUILLARD",
-}
-
-
 def _rounded_clip(img: Image.Image, radius: int = 14, border=(40, 46, 70)) -> None:
     mask = Image.new("L", img.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle([0, 0, img.width - 1, img.height - 1], radius=radius, fill=255)
@@ -293,7 +287,7 @@ def draw_weather_card(img: Image.Image, w, step: int = 0, place: str | None = No
     shadow = sprites.weather_icon(w.icon, size=3)
     img.paste(Image.new("RGBA", icon.size, (0, 0, 0, 90)), (120 - icon.width // 2 + 2, 20 + 2), shadow)
     img.paste(icon, (120 - icon.width // 2, 20), icon)
-    cond = CONDITION_FR.get(w.icon, w.icon)
+    cond = i18n.condition(w.icon)
     _txt(d, (120 - d.textlength(cond, font=font(10)) / 2, 62), cond, font(10), (255, 255, 255),
          stroke=2, stroke_fill=outline)
     temp = f"{w.temp:.0f}°"

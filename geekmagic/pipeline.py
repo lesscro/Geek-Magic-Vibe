@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from . import data, settings, weather  # noqa: E402
+from . import data, i18n, settings, weather  # noqa: E402
 from .client import GeekMagicClient, GeekMagicError  # noqa: E402
 
 OUTPUT = ROOT / "output"
@@ -71,7 +71,7 @@ def _cleanup(client: GeekMagicClient, kind: str, keep_stems: set[str], log: Log)
             stale = True
         if stale:
             client.delete(name)
-            log(f"    retiré de l'écran : {name}")
+            log(f"    removed from the screen: {name}")
 
 
 LOCK = ROOT / "logs" / "device.lock"
@@ -94,7 +94,7 @@ class _DeviceLock:
                 if time.time() - LOCK.stat().st_mtime > 300:      # verrou périmé (crash)
                     LOCK.unlink(missing_ok=True)
                 elif time.time() > deadline:
-                    raise GeekMagicError("Un autre envoi vers l'écran est en cours")
+                    raise GeekMagicError("Another send to the screen is in progress")
                 else:
                     time.sleep(1.5)
 
@@ -115,6 +115,7 @@ def run(cfg: dict, kinds: list[str] | None = None, log: Log = print,
 
 def _run(cfg: dict, kinds: list[str] | None, log: Log, now: datetime | None, push: bool) -> dict:
     from scripts import send_clock, send_tokens, send_weather
+    i18n.use(cfg.get("language"))
     tz = ZoneInfo(cfg["clock"]["timezone"])
     now = now or datetime.now(tz)
     kinds = kinds or list(settings.KINDS)
@@ -133,7 +134,7 @@ def _run(cfg: dict, kinds: list[str] | None, log: Log, now: datetime | None, pus
         if not active or not mine:
             if push:
                 _cleanup(client, kind, set(), log)
-            log(f"[-] {kind} : hors créneau ou désactivée")
+            log(f"[-] {kind}: outside its time slot or disabled")
             done[kind] = []
             continue
         pushed = []
@@ -149,7 +150,7 @@ def _run(cfg: dict, kinds: list[str] | None, log: Log, now: datetime | None, pus
                     w = weather.get_weather(loc)
                     place = None if loc["scene"] == "auto" else loc["scene"]
                     send_weather.build_weather_gif(w, gif, place=place, allowed=cfg["weather"]["scenes_enabled"])
-                    log(f"[+] météo {loc['city']} {w.temp:.0f}° {w.icon}")
+                    log(f"[+] weather {loc['city']} {w.temp:.0f}° {w.icon}")
                 else:
                     w = None
                     if cfg["clock"]["show_weather"]:
@@ -158,11 +159,11 @@ def _run(cfg: dict, kinds: list[str] | None, log: Log, now: datetime | None, pus
                         try:
                             w = weather.get_weather(loc) if loc else None
                         except Exception as exc:  # noqa: BLE001 — l'heure prime sur la météo
-                            log(f"[!] météo indisponible pour l'horloge ({exc})")
+                            log(f"[!] weather unavailable for the clock ({exc})")
                     effect = None if cfg["clock"]["effect"] == "random" else cfg["clock"]["effect"]
                     _, used = send_clock.build_clock_gif(now, w, effect, out=gif,
                                                          night_hours=(cfg["clock"]["night_start"], cfg["clock"]["night_end"]))
-                    log(f"[+] horloge {now:%H:%M} (entrée : {used})")
+                    log(f"[+] clock {now:%H:%M} (entry: {used})")
                 if push:
                     send_tokens.push_gif_alternating(client, gif)
                 pushed.append(e["stem"])

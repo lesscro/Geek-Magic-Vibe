@@ -27,7 +27,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from geekmagic import data, pipeline, places, render, scenes, settings, weather  # noqa: E402
+from geekmagic import data, i18n, pipeline, places, render, scenes, settings, weather  # noqa: E402
 from geekmagic.client import GeekMagicClient, GeekMagicError  # noqa: E402
 from scripts import send_clock, send_tokens, send_weather  # noqa: E402
 
@@ -78,7 +78,7 @@ def put_config(cfg: dict = Body(...)):
     try:
         return settings.save(cfg)
     except (ValueError, KeyError, TypeError) as exc:
-        raise HTTPException(422, f"Configuration refusée : {exc}")
+        raise HTTPException(422, f"Configuration rejected: {exc}")
 
 
 @app.get("/api/meta")
@@ -144,7 +144,7 @@ def status():
 def device_test(body: dict = Body(...)):
     ip = str(body.get("ip", "")).strip()
     if not re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", ip):
-        raise HTTPException(422, "Adresse IP invalide")
+        raise HTTPException(422, "Invalid IP address")
     return _device_state(ip)
 
 
@@ -170,7 +170,7 @@ def _do_send(kinds: list[str]) -> None:
 @app.post("/api/send")
 def send(body: dict = Body(default={})):
     if _send["running"]:
-        raise HTTPException(409, "Un envoi est déjà en cours")
+        raise HTTPException(409, "A send is already in progress")
     kinds = [k for k in body.get("kinds", settings.KINDS) if k in settings.KINDS]
     _send.update(running=True, log=[], ok=None, finished=None)
     threading.Thread(target=_do_send, args=(kinds,), daemon=True).start()
@@ -186,7 +186,7 @@ def geocode(q: str = Query(min_length=2, max_length=60)):
     try:
         res = _json_get(url).get("results", [])
     except OSError as exc:
-        raise HTTPException(502, f"Recherche indisponible : {exc}")
+        raise HTTPException(502, f"Search unavailable: {exc}")
     return [{"city": r["name"], "region": r.get("admin1", ""), "country": r.get("country", ""),
              "lat": r["latitude"], "lon": r["longitude"], "timezone": r.get("timezone", "Europe/Paris")}
             for r in res]
@@ -202,7 +202,7 @@ def crypto_search(q: str = Query(min_length=1, max_length=12)):
     try:
         prices = cached("prices", 600, _all_prices)
     except OSError as exc:
-        raise HTTPException(502, f"Marché indisponible : {exc}")
+        raise HTTPException(502, f"Market unavailable: {exc}")
     q = q.upper().strip()
     hits = sorted((s for s in prices if s.startswith(q)), key=lambda s: (len(s), s))[:8]
     return [{"pair": f"{s}/USDT", "symbol": s, "price": prices[s]} for s in hits]
@@ -283,6 +283,7 @@ def _png_bytes(img: Image.Image) -> bytes:
 
 @app.get("/api/preview/crypto")
 def preview_crypto(pair: str = "BTC/USDT", fmt: str = "gif", frame: int = 0):
+    i18n.use(settings.load()["language"])
     try:
         snap = cached(f"mk:{pair}", 60, lambda: data.get_market(pair))
     except data.DataError as exc:
@@ -309,6 +310,7 @@ def preview_weather(loc: str | None = None, scene: str | None = None, moment: st
                     cond: str | None = None, temp: float | None = None, season: str | None = None,
                     fmt: str = "gif", frame: int = 6, sample: bool = False, bare: bool = False):
     cfg = settings.load()
+    i18n.use(cfg["language"])
     location = _loc(cfg, loc)
     base = dataclasses.replace(SAMPLE, city=location["city"]) if sample else _live_weather(location)
     w = _simulate(base, moment, cond, temp, season)
@@ -336,6 +338,7 @@ def preview_clock(fmt: str = "gif", effect: str | None = None, frame: int = 18, 
                   tz: str | None = None, show_weather: bool | None = None, loc: str | None = None,
                   ns: int | None = None, ne: int | None = None):
     cfg = settings.load()
+    i18n.use(cfg["language"])
     try:
         now = datetime.now(ZoneInfo(tz or cfg["clock"]["timezone"]))
     except Exception:  # noqa: BLE001 — fuseau inconnu : on garde celui de la config

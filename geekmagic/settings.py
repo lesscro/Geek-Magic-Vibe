@@ -25,6 +25,7 @@ EFFECTS = ["random", "fade", "slide_left", "slide_right", "slide_up", "slide_dow
 MAX_LOCATIONS = 3
 
 DEFAULTS: dict = {
+    "language": "en",
     "device": {"ip": "192.168.1.100", "refresh_minutes": 9},
     "resolution": [240, 240],
     "crypto": {
@@ -91,9 +92,10 @@ def load() -> dict:
 def validate(cfg: dict) -> dict:
     """Nettoie et borne une config reçue du backoffice (jamais de confiance aveugle)."""
     out = _merge(DEFAULTS, cfg)
+    out["language"] = out.get("language") if out.get("language") in ("en", "fr") else "en"
     ip = str(out["device"].get("ip", "")).strip()
     if not re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", ip):
-        raise ValueError("Adresse IP invalide")
+        raise ValueError("Invalid IP address")
     out["device"]["ip"] = ip
     out["device"]["refresh_minutes"] = max(3, min(120, int(out["device"].get("refresh_minutes", 9))))
     out["crypto"]["cycle"] = max(3, min(120, int(out["crypto"].get("cycle", 10))))

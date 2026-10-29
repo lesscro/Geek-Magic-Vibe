@@ -18,7 +18,9 @@ sys.path.insert(0, str(ROOT))
 
 from PIL import Image  # noqa: E402
 
-from geekmagic import data, render, weather  # noqa: E402
+from geekmagic import data, i18n, render, weather  # noqa: E402
+
+i18n.use("en")
 
 OUT = ROOT / "docs" / "screenshots"
 SCALE = 2
@@ -70,12 +72,12 @@ def gifs() -> None:
         print(f"[!] crypto : {exc}")
 
     cases = {
-        "meteo-ville.gif": ("city", {}),
-        "meteo-cafe-nuit.gif": ("cafe", dict(icon="MOON", phase="NUIT", hour=22.5, is_day=False, temp=11)),
-        "meteo-parc-neige.gif": ("park", dict(icon="SNOW", code=73, temp=-1, season="WINTER", phase="JOURNEE", hour=11)),
-        "meteo-port-pluie.gif": ("harbor", dict(icon="RAIN", code=63, temp=12, season="AUTUMN", phase="MATIN", hour=9)),
-        "meteo-plage.gif": ("beach", dict(icon="SUN", temp=27)),
-        "meteo-pont-crepuscule.gif": ("bridge", dict(phase="CREPUSCULE", hour=19.8, season="AUTUMN", temp=16)),
+        "weather-city.gif": ("city", {}),
+        "weather-cafe-night.gif": ("cafe", dict(icon="MOON", phase="NUIT", hour=22.5, is_day=False, temp=11)),
+        "weather-park-snow.gif": ("park", dict(icon="SNOW", code=73, temp=-1, season="WINTER", phase="JOURNEE", hour=11)),
+        "weather-harbor-rain.gif": ("harbor", dict(icon="RAIN", code=63, temp=12, season="AUTUMN", phase="MATIN", hour=9)),
+        "weather-beach.gif": ("beach", dict(icon="SUN", temp=27)),
+        "weather-bridge-dusk.gif": ("bridge", dict(phase="CREPUSCULE", hour=19.8, season="AUTUMN", temp=16)),
     }
     for name, (place, kw) in cases.items():
         w = sample(**kw)
@@ -85,7 +87,7 @@ def gifs() -> None:
     frames = [card(render.draw_clock_card, 14, 32, st, now=now, prev=(14, 31), w=sample()) for st in range(scenes.N)]
     intro, _ = transitions.intro_frames(frames[0], n=6, effect="slide_up")
     seq = intro + frames
-    write("horloge.gif", seq, [60] * 6 + [100] * (len(frames) - 1) + [1800], 96)
+    write("clock.gif", seq, [60] * 6 + [100] * (len(frames) - 1) + [1800], 96)
 
 
 def main() -> int:
@@ -102,16 +104,16 @@ def main() -> int:
         save(strip(crypto), "cards-crypto.png")
 
     scenes_day = [("city", {}), ("lake", {}), ("beach", {}), ("mountains", {})]
-    save(strip([card(render.draw_weather_card, sample(**k), 6, place=p) for p, k in scenes_day]), "cards-meteo-jour.png")
+    save(strip([card(render.draw_weather_card, sample(**k), 6, place=p) for p, k in scenes_day]), "cards-weather-day.png")
     mixed = [("cafe", dict(icon="MOON", phase="NUIT", hour=22.5, is_day=False, temp=11)),
              ("park", dict(icon="SNOW", code=73, temp=-1, season="WINTER", phase="JOURNEE", hour=11)),
              ("harbor", dict(icon="RAIN", code=63, temp=12, season="AUTUMN", phase="MATIN", hour=9)),
              ("bridge", dict(icon="PARTLY", phase="CREPUSCULE", hour=19.8, season="AUTUMN", temp=16))]
-    save(strip([card(render.draw_weather_card, sample(**k), 6, place=p) for p, k in mixed]), "cards-meteo-moments.png")
+    save(strip([card(render.draw_weather_card, sample(**k), 6, place=p) for p, k in mixed]), "cards-weather-moments.png")
 
     now = datetime(2026, 6, 15, 14, 32)
     clocks = [card(render.draw_clock_card, 14, 32, step, now=now, prev=(14, 31), w=sample()) for step in (2, 4, 20)]
-    save(strip(clocks), "card-horloge.png")
+    save(strip(clocks), "card-clock.png")
     return 0
 
 

@@ -72,7 +72,7 @@ def main() -> int:
 
     hits = find(args.subnet, args.port)
     if not hits:
-        print("[!] Aucun écran trouvé. Est-il allumé et sur le même réseau que ce PC ?")
+        print("[!] No screen found. Is it powered on and on the same network as this PC?")
         return 1
 
     print(f"[+] Candidats GeekMagic : {', '.join(hits)}")
@@ -82,9 +82,9 @@ def main() -> int:
         cfg = settings.load()
         cfg["device"]["ip"] = hits[0]
         settings.save(cfg)
-        print(f"[+] Écran trouvé : {hits[0]} (enregistré dans config.json)")
+        print(f"[+] Screen found: {hits[0]} (saved in config.json)")
     else:
-        print("-> Plusieurs candidats : renseignez la bonne adresse dans le backoffice (Écran et planning).")
+        print("-> Several candidates: enter the right address in the backoffice (Screen and schedule).")
     return 0
 
 

@@ -1,13 +1,27 @@
-// GeekMagic backoffice : vanilla ES module, aucun build.
+// GeekMagic backoffice: vanilla ES module, no build step.
+// i18n: English is the source language; <lang>.json maps English text to its translation.
+const LANG = ((await (await fetch('/api/config')).json()).language) || 'en';
+const LOCALE = LANG === 'fr' ? 'fr-FR' : 'en-US';
+const DICT = LANG === 'en' ? {} : await (await fetch(`/i18n/${LANG}.json`)).json();
+const t = (key, vars) => {
+  let s = DICT[key] ?? key;
+  for (const [k, v] of Object.entries(vars || {})) s = s.replaceAll(`{${k}}`, v);
+  return s;
+};
+document.documentElement.lang = LANG;
+document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+document.querySelectorAll('[data-i18n-aria]').forEach((el) => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
+document.querySelectorAll('[data-i18n-title]').forEach((el) => el.setAttribute('title', t(el.dataset.i18nTitle)));
+
 const $ = (s, el = document) => el.querySelector(s);
 
-// replaceChildren ignore les null/false (sinon le DOM affiche "null")
+// replaceChildren ignores null/false (otherwise the DOM prints "null")
 const _replaceChildren = Element.prototype.replaceChildren;
 Element.prototype.replaceChildren = function (...kids) {
   return _replaceChildren.apply(this, kids.flat(9).filter((k) => k != null && k !== false));
 };
 
-/* ------------------------------------------------------------------ outils */
+/* ------------------------------------------------------------------ helpers */
 
 const SVG_TAGS = new Set(['svg', 'circle', 'text', 'path', 'g', 'rect']);
 function h(tag, attrs = {}, ...kids) {
@@ -39,34 +53,35 @@ const api = async (path, opts) => {
   const r = await fetch(path, opts);
   if (!r.ok) {
     let msg = r.statusText;
-    try { msg = (await r.json()).detail || msg; } catch { /* corps non JSON */ }
+    try { msg = (await r.json()).detail || msg; } catch { /* body is not JSON */ }
     throw new Error(msg);
   }
   return r.json();
 };
 const debounce = (fn, ms = 300) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const clone = (o) => JSON.parse(JSON.stringify(o));
-const fmtMo = (b) => (b / 1048576).toFixed(1).replace('.', ',');
-const fmtPrice = (v) => (v >= 1000 ? Math.round(v).toLocaleString('fr-FR') : v >= 1 ? v.toFixed(2).replace('.', ',') : v.toFixed(4).replace('.', ','));
+const fmtNum = (v, d) => v.toLocaleString(LOCALE, { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtMo = (b) => fmtNum(b / 1048576, 1);
+const fmtPrice = (v) => (v >= 1000 ? Math.round(v).toLocaleString(LOCALE) : fmtNum(v, v >= 1 ? 2 : 4));
 const mins = (t) => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
 
 const KIND = {
-  clock:   { label: 'Horloge', one: 'Horloge', icon: 'clock',   color: '#ffc247', sub: 'Style HTC Sense' },
-  weather: { label: 'Météo',   one: 'Météo',   icon: 'weather', color: '#4f93ff', sub: 'Scène du jour' },
-  crypto:  { label: 'Cryptos', one: 'Crypto',  icon: 'coin',    color: '#56e1c9', sub: 'Une card par token' },
+  clock:   { label: t('Clock'), one: t('Clock'), icon: 'clock',   color: '#ffc247', sub: t('HTC Sense style') },
+  weather: { label: t('Weather'),   one: t('Weather'),   icon: 'weather', color: '#4f93ff', sub: t('Scene of the day') },
+  crypto:  { label: t('Crypto'), one: 'Crypto',  icon: 'coin',    color: '#56e1c9', sub: t('One card per token') },
 };
 const SCENE_LABEL = {
-  city: 'Ville animée', cafe: 'Terrasse de café', market: 'Marché', bridge: 'Pont et couple', park: 'Parc et promeneurs',
-  playground: 'Aire de jeux', picnic: 'Pique-nique', lake: 'Lac et pêcheur', mountains: 'Montagnes', farm: 'Ferme',
-  harbor: 'Port et phare', beach: 'Plage',
+  city: t('Lively city'), cafe: t('Café terrace'), market: t('Market'), bridge: t('Bridge and couple'), park: t('Park and walkers'),
+  playground: t('Playground'), picnic: t('Picnic'), lake: t('Lake and angler'), mountains: t('Mountains'), farm: t('Farm'),
+  harbor: t('Harbor and lighthouse'), beach: t('Beach'),
 };
-const MOMENTS = [['AURORE', 'Aurore'], ['MATIN', 'Matin'], ['APRES-MIDI', 'Après-midi'], ['CREPUSCULE', 'Crépuscule'], ['NUIT', 'Nuit']];
-const CONDS = [['SUN', 'Soleil'], ['PARTLY', 'Éclaircies'], ['CLOUD', 'Couvert'], ['RAIN', 'Pluie'], ['STORM', 'Orage'], ['SNOW', 'Neige'], ['FOG', 'Brouillard']];
-const SEASONS = [['SPRING', 'Printemps'], ['SUMMER', 'Été'], ['AUTUMN', 'Automne'], ['WINTER', 'Hiver']];
-const EFFECT_LABEL = { random: 'Aléatoire', fade: 'Fondu', slide_left: 'Glisse gauche', slide_right: 'Glisse droite', slide_up: 'Glisse haut', slide_down: 'Glisse bas', zoom: 'Zoom', wipe: 'Rideau', dissolve: 'Dissolution', iris: 'Iris' };
+const MOMENTS = [['AURORE', t('Dawn')], ['MATIN', t('Morning')], ['APRES-MIDI', t('Afternoon')], ['CREPUSCULE', t('Dusk')], ['NUIT', t('Night')]];
+const CONDS = [['SUN', t('Sunny')], ['PARTLY', t('Partly cloudy')], ['CLOUD', t('Overcast')], ['RAIN', t('Rain')], ['STORM', t('Storm')], ['SNOW', t('Snow')], ['FOG', t('Fog')]];
+const SEASONS = [['SPRING', t('Spring')], ['SUMMER', t('Summer')], ['AUTUMN', t('Autumn')], ['WINTER', t('Winter')]];
+const EFFECT_LABEL = { random: t('Random'), fade: t('Fade'), slide_left: t('Slide left'), slide_right: t('Slide right'), slide_up: t('Slide up'), slide_down: t('Slide down'), zoom: 'Zoom', wipe: t('Wipe'), dissolve: t('Dissolve'), iris: 'Iris' };
 const ZONES = ['Europe/Paris', 'Europe/London', 'Europe/Brussels', 'Europe/Zurich', 'Europe/Madrid', 'Europe/Lisbon', 'Atlantic/Reykjavik', 'America/New_York', 'America/Montreal', 'America/Los_Angeles', 'America/Sao_Paulo', 'Africa/Casablanca', 'Asia/Dubai', 'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Noumea', 'Indian/Reunion'];
 
-/* -------------------------------------------------------------------- état */
+/* ------------------------------------------------------------------- state */
 
 const state = {
   cfg: null, saved: '', status: null, meta: null, route: 'overview',
@@ -80,7 +95,7 @@ function planOf(cfg) {
   for (const kind of cfg.schedule.order) {
     if (!cfg.schedule[kind].enabled) continue;
     let items = [];
-    if (kind === 'clock') items = [{ key: 'clock', label: 'Horloge' }];
+    if (kind === 'clock') items = [{ key: 'clock', label: t('Clock') }];
     if (kind === 'weather') items = cfg.weather.locations.filter((l) => l.enabled).map((l) => ({ key: l.id, label: l.city }));
     if (kind === 'crypto') items = cfg.crypto.tokens.filter((t) => t.enabled).map((t) => ({ key: t.pair, label: t.pair.split('/')[0] }));
     for (const it of items) out.push({ kind, ...it, pos: pos++ });
@@ -107,11 +122,11 @@ function snack(msg, { err = false, actions = [], ms = 4200 } = {}) {
 }
 function syncDirtyBar() {
   if (dirty()) {
-    snack('Modifications non enregistrées', {
+    snack(t('Unsaved changes'), {
       ms: 0,
       actions: [
-        { label: 'Annuler', ghost: true, run: () => { state.cfg = JSON.parse(state.saved); touch(true); } },
-        { label: 'Enregistrer', run: save },
+        { label: t('Cancel'), ghost: true, run: () => { state.cfg = JSON.parse(state.saved); touch(true); } },
+        { label: t('Save'), run: save },
       ],
     });
   } else if ($('#snack .btn-ghost')) $('#snack').classList.remove('show');
@@ -122,38 +137,38 @@ async function save() {
     state.saved = JSON.stringify(state.cfg);
     state.nonce = Date.now();
     touch(true);
-    snack('Configuration enregistrée', { actions: [{ label: "Envoyer sur l'écran", run: () => sendNow() }], ms: 6000 });
+    snack(t('Configuration saved'), { actions: [{ label: t('Send to screen'), run: () => sendNow() }], ms: 6000 });
     refreshStatus();
   } catch (e) { snack(e.message, { err: true, ms: 6000 }); }
 }
 
-/* ---------------------------------------------------------------- envoi */
+/* ---------------------------------------------------------------- send */
 
 async function sendNow(kinds) {
   if (dirty()) await save();
   const sheet = $('#sheet');
   sheet.hidden = false;
-  const log = h('pre', {}, 'Préparation…');
+  const log = h('pre', {}, t('Preparing…'));
   const bar = h('div', { class: 'bar' }, h('i'));
-  sheet.replaceChildren(h('div', { class: 'row' }, h('div', { class: 'grow' }, h('h3', {}, "Envoi vers l'écran"), h('p', { class: 'faint' }, 'Génération des GIF puis transfert, comptez environ une minute')), h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Fermer', onclick: () => { sheet.hidden = true; } }, svgIcon('x'))), bar, log);
+  sheet.replaceChildren(h('div', { class: 'row' }, h('div', { class: 'grow' }, h('h3', {}, t('Sending to the screen')), h('p', { class: 'faint' }, t('Generating the GIFs then transferring, allow about a minute'))), h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('Close'), onclick: () => { sheet.hidden = true; } }, svgIcon('x'))), bar, log);
   try {
     await api('/api/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(kinds ? { kinds } : {}) });
   } catch (e) { log.textContent = e.message; bar.classList.add('done'); return; }
   const timer = setInterval(async () => {
     const st = await api('/api/status');
-    log.textContent = (st.send.log || []).join('\n') || 'Préparation…';
+    log.textContent = (st.send.log || []).join('\n') || t('Preparing…');
     log.scrollTop = log.scrollHeight;
     if (!st.send.running) {
       clearInterval(timer);
       bar.classList.add('done');
       state.status = st; renderChrome();
-      snack(st.send.ok ? "L'écran est à jour" : "L'envoi a échoué, voir le détail", { err: !st.send.ok });
+      snack(st.send.ok ? t('The screen is up to date') : t('Sending failed, see the details'), { err: !st.send.ok });
       if (st.send.ok) setTimeout(() => { sheet.hidden = true; }, 3500);
     }
   }, 900);
 }
 
-/* -------------------------------------------------------------- composants */
+/* -------------------------------------------------------------- components */
 
 function sw(checked, onChange, label) {
   const input = h('input', { type: 'checkbox', checked, 'aria-label': label, onchange: (e) => onChange(e.target.checked) });
@@ -175,7 +190,7 @@ function chips(options, current, onPick, { allowNone = false } = {}) {
 }
 function bezel(src, { alt, replay, loading } = {}) {
   const img = h('img', { src, alt, width: 240, height: 240 });
-  const screen = h('div', { class: 'screen loading' }, img, h('div', { class: 'busy' }, 'Génération…'));
+  const screen = h('div', { class: 'screen loading' }, img, h('div', { class: 'busy' }, t('Generating…')));
   img.addEventListener('load', () => screen.classList.remove('loading'));
   img.addEventListener('error', () => { screen.classList.remove('loading'); });
   const el = h('div', { class: 'bezel' }, screen);
@@ -191,7 +206,7 @@ function placeSearch({ placeholder, fetcher, render, onPick, min = 2 }) {
     if (q.length < min) { pop.hidden = true; return; }
     try {
       const res = await fetcher(q);
-      pop.replaceChildren(...(res.length ? res.map((r) => h('button', { type: 'button', onclick: () => { onPick(r); input.value = ''; pop.hidden = true; } }, render(r))) : [h('div', { class: 'empty' }, 'Aucun résultat')]));
+      pop.replaceChildren(...(res.length ? res.map((r) => h('button', { type: 'button', onclick: () => { onPick(r); input.value = ''; pop.hidden = true; } }, render(r))) : [h('div', { class: 'empty' }, t('No results'))]));
       pop.hidden = false;
     } catch (e) { pop.replaceChildren(h('div', { class: 'empty' }, e.message)); pop.hidden = false; }
   }, 280);
@@ -226,7 +241,7 @@ function sortable(container, { itemSel, gripSel, onMove }) {
 }
 const moveItem = (arr, from, to) => { const [x] = arr.splice(from, 1); arr.splice(to, 0, x); };
 
-/* planning : frise 24 h + éditeur de créneaux */
+/* schedule: 24 h timeline + time slot editor */
 function segs(slots) {
   const out = [];
   for (const [a, b] of slots) {
@@ -240,13 +255,13 @@ function timeline(kinds = state.cfg.schedule.order) {
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const rows = kinds.map((k) => {
     const sc = state.cfg.schedule[k];
-    const track = h('div', { class: 'tl-track', role: 'img', 'aria-label': `${KIND[k].label} : ${sc.enabled ? sc.slots.map((s) => s.join(' à ')).join(', ') : 'désactivée'}` },
+    const track = h('div', { class: 'tl-track', role: 'img', 'aria-label': `${KIND[k].label}: ${sc.enabled ? sc.slots.map((s) => s.join(t(' to '))).join(', ') : t('disabled')}` },
       sc.enabled ? segs(sc.slots).map(([s, e]) => h('i', { class: 'tl-seg', style: `left:${(s / 1440) * 100}%;width:${((e - s) / 1440) * 100}%;--c:${KIND[k].color}` })) : null,
       h('i', { class: 'tl-now', style: `left:${(nowMin / 1440) * 100}%` }));
     return h('div', { class: 'tl-row' }, h('span', { class: 'muted' }, KIND[k].label), track);
   });
   return h('div', {}, h('div', { class: 'tl' }, rows),
-    h('div', { class: 'tl-ticks' }, h('span'), h('div', {}, ['0 h', '6 h', '12 h', '18 h', '24 h'].map((t) => h('span', {}, t)))));
+    h('div', { class: 'tl-ticks' }, h('span'), h('div', {}, ['0:00', '6:00', '12:00', '18:00', '24:00'].map((t) => h('span', {}, t)))));
 }
 function slotEditor(kind) {
   const sc = state.cfg.schedule[kind];
@@ -254,21 +269,21 @@ function slotEditor(kind) {
   const draw = () => {
     wrap.replaceChildren(
       h('div', {}, sc.slots.map((s, i) => h('div', { class: 'slot' },
-        h('input', { class: 'input', type: 'time', value: s[0], 'aria-label': 'Début', onchange: (e) => { s[0] = e.target.value || '00:00'; touch(); } }),
-        h('span', {}, 'à'),
-        h('input', { class: 'input', type: 'time', value: s[1] === '24:00' ? '23:59' : s[1], 'aria-label': 'Fin', onchange: (e) => { s[1] = e.target.value || '00:00'; touch(); } }),
-        h('button', { class: 'icon-btn danger', type: 'button', 'aria-label': 'Supprimer ce créneau', disabled: sc.slots.length < 2, onclick: () => { sc.slots.splice(i, 1); touch(true); } }, svgIcon('trash')))),
+        h('input', { class: 'input', type: 'time', value: s[0], 'aria-label': t('Start'), onchange: (e) => { s[0] = e.target.value || '00:00'; touch(); } }),
+        h('span', {}, t('to')),
+        h('input', { class: 'input', type: 'time', value: s[1] === '24:00' ? '23:59' : s[1], 'aria-label': t('End'), onchange: (e) => { s[1] = e.target.value || '00:00'; touch(); } }),
+        h('button', { class: 'icon-btn danger', type: 'button', 'aria-label': t('Delete this time slot'), disabled: sc.slots.length < 2, onclick: () => { sc.slots.splice(i, 1); touch(true); } }, svgIcon('trash')))),
       ),
       h('div', { class: 'chips' },
-        h('button', { class: 'chip', type: 'button', onclick: () => { sc.slots.push(['18:00', '23:00']); touch(true); } }, svgIcon('plus'), 'Ajouter un créneau'),
-        [['Toute la journée', [['00:00', '24:00']]], ['Journée 7h à 22h', [['07:00', '22:00']]], ['Soirée', [['18:00', '23:30']]]].map(([l, v]) =>
+        h('button', { class: 'chip', type: 'button', onclick: () => { sc.slots.push(['18:00', '23:00']); touch(true); } }, svgIcon('plus'), t('Add a time slot')),
+        [[t('All day'), [['00:00', '24:00']]], [t('Daytime 7:00 to 22:00'), [['07:00', '22:00']]], [t('Evening'), [['18:00', '23:30']]]].map(([l, v]) =>
           h('button', { class: 'chip', type: 'button', onclick: () => { sc.slots = clone(v); touch(true); } }, l))));
   };
   draw();
   return wrap;
 }
 
-/* ---------------------------------------------------------- avatars & listes */
+/* ---------------------------------------------------------- avatars & lists */
 
 const hue = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 function coinAvatar(sym, ring) {
@@ -281,16 +296,16 @@ function entryAvatar(e) {
   return h('span', { class: 'avatar', style: `--ring:${KIND[e.kind].color}` }, h('img', { src: url, alt: '', loading: 'lazy' }));
 }
 
-/* -------------------------------------------------------- panneau latéral */
+/* ---------------------------------------------------------- side panel */
 
 function renderSide() {
   const cfg = state.cfg, plan = planOf(cfg), order = cfg.schedule.order, st = state.status;
   const wrap = h('div', { class: 'enter' });
   wrap.append(
     h('h2', {}, 'Rotation'),
-    h('p', { class: 'sub' }, "L'ordre dans lequel l'écran fait défiler ses cards."),
+    h('p', { class: 'sub' }, t('The order in which the screen cycles through its cards.')),
     h('div', { style: 'margin-top:22px' }, range({
-      label: 'Durée par card', min: 4, max: 60, value: cfg.crypto.cycle, fmt: (v) => `${v} s`,
+      label: t('Duration per card'), min: 4, max: 60, value: cfg.crypto.cycle, fmt: (v) => `${v} s`,
       onInput: (v) => { cfg.crypto.cycle = v; touch(); },
     })),
   );
@@ -300,16 +315,16 @@ function renderSide() {
     const active = st ? st.active[kind] : true;
     const on = cfg.schedule[kind].enabled;
     list.append(h('section', { class: `item${on ? '' : ' off'}`, 'data-g': kind, style: 'align-items:flex-start;flex-wrap:wrap' },
-      h('button', { class: 'grip', type: 'button', 'aria-label': `Déplacer ${KIND[kind].label}` }, svgIcon('grip', 'ic-fill')),
+      h('button', { class: 'grip', type: 'button', 'aria-label': t('Move {name}', { name: KIND[kind].label }) }, svgIcon('grip', 'ic-fill')),
       h('div', { class: 'grow' },
         h('div', { class: 'row' },
           h('span', { class: 'faint', style: 'color:var(--amber);font-family:var(--font-display);font-weight:700' }, items.length ? String(items[0].pos).padStart(2, '0') : '--'),
           h('b', {}, KIND[kind].label),
-          !on ? h('span', { class: 'pill' }, 'Désactivée') : active ? h('span', { class: 'pill ok' }, 'Affichée') : h('span', { class: 'pill warn' }, 'Hors créneau')),
-        h('small', {}, on ? `${items.length} card${items.length > 1 ? 's' : ''} · ${KIND[kind].sub}` : 'Retirée de la rotation')),
+          !on ? h('span', { class: 'pill' }, t('Disabled')) : active ? h('span', { class: 'pill ok' }, t('Shown')) : h('span', { class: 'pill warn' }, t('Outside time slot'))),
+        h('small', {}, on ? `${items.length} ${t(items.length > 1 ? 'cards' : 'card')} · ${KIND[kind].sub}` : t('Removed from rotation'))),
       h('div', { class: 'row', style: 'gap:2px' },
-        h('button', { class: 'icon-btn', type: 'button', 'aria-label': `Monter ${KIND[kind].label}`, disabled: gi === 0, onclick: () => { moveItem(order, gi, gi - 1); touch(true); } }, svgIcon('up')),
-        h('button', { class: 'icon-btn', type: 'button', 'aria-label': `Descendre ${KIND[kind].label}`, disabled: gi === order.length - 1, onclick: () => { moveItem(order, gi, gi + 1); touch(true); } }, svgIcon('down'))),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('Move {name} up', { name: KIND[kind].label }), disabled: gi === 0, onclick: () => { moveItem(order, gi, gi - 1); touch(true); } }, svgIcon('up')),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('Move {name} down', { name: KIND[kind].label }), disabled: gi === order.length - 1, onclick: () => { moveItem(order, gi, gi + 1); touch(true); } }, svgIcon('down'))),
       items.length ? h('ul', { class: `seq${on && active ? '' : ' dim'}`, style: 'flex-basis:100%;padding-left:36px' }, items.map((e) =>
         h('li', {}, entryAvatar(e), h('span', {}, e.label), h('span', { class: 'pos' }, String(e.pos).padStart(2, '0'))))) : null));
   });
@@ -321,11 +336,11 @@ function renderSide() {
 /* ------------------------------------------------------------------ pages */
 
 const PAGES = {
-  overview: { eyebrow: 'Cockpit', title: "Vue d'ensemble" },
-  crypto: { eyebrow: 'Marchés', title: 'Cryptos' },
-  weather: { eyebrow: 'Ciel et décors', title: 'Météo' },
-  clock: { eyebrow: 'Style HTC Sense', title: 'Horloge' },
-  screen: { eyebrow: 'Matériel', title: 'Écran et planning' },
+  overview: { eyebrow: 'Cockpit', title: t('Overview') },
+  crypto: { eyebrow: t('Markets'), title: t('Crypto') },
+  weather: { eyebrow: t('Sky and scenery'), title: t('Weather') },
+  clock: { eyebrow: t('HTC Sense style'), title: t('Clock') },
+  screen: { eyebrow: t('Hardware'), title: t('Screen and schedule') },
 };
 
 function pageOverview() {
@@ -336,17 +351,17 @@ function pageOverview() {
   const sel = plan.find((p) => `${p.kind}:${p.key}` === state.sel.overview) || plan[0];
   const view = h('div', { class: 'enter' });
   view.append(h('div', { class: 'stats' },
-    stat(dev ? (dev.online ? 'ok' : 'ko') : '', dev ? (dev.online ? 'En ligne' : 'Hors ligne') : '…', '', `Écran ${cfg.device.ip}`),
-    stat('', dev?.free ? fmtMo(dev.free) : '–', ' Mo', 'Mémoire libre'),
-    stat('', String(plan.length), '', 'Cards en rotation'),
-    stat('', nextIn == null ? '–' : String(nextIn), ' min', 'Prochain rafraîchissement')));
+    stat(dev ? (dev.online ? 'ok' : 'ko') : '', dev ? (dev.online ? t('Online') : t('Offline')) : '…', '', t('Screen {ip}', { ip: cfg.device.ip })),
+    stat('', dev?.free ? fmtMo(dev.free) : '–', t(' MB'), t('Free memory')),
+    stat('', String(plan.length), '', t('Cards in rotation')),
+    stat('', nextIn == null ? '–' : String(nextIn), ' min', t('Next refresh'))));
   const left = h('div', { class: 'stack' },
-    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Planning du jour'), h('p', { class: 'faint' }, 'Quand chaque card est visible sur l’écran')), h('a', { class: 'btn btn-ghost btn-s', href: '#/screen' }, 'Régler')), timeline()),
+    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Daily schedule')), h('p', { class: 'faint' }, t('When each card is visible on the screen'))), h('a', { class: 'btn btn-ghost btn-s', href: '#/screen' }, t('Adjust'))), timeline()),
     memoryCard());
   let prev;
   const right = h('section', { class: 'card sticky' },
-    h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, "Sur l'écran"), h('p', { class: 'faint' }, 'Aperçu fidèle, pixel pour pixel'))),
-    prev = sel ? bezel(previewUrl(sel, { n: state.nonce }), { alt: `Aperçu ${sel.label}` }) : h('div', { class: 'empty-state' }, h('b', {}, 'Aucune card'), 'Activez une card pour la voir ici.'),
+    h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('On the screen')), h('p', { class: 'faint' }, t('Faithful preview, pixel for pixel')))),
+    prev = sel ? bezel(previewUrl(sel, { n: state.nonce }), { alt: t('Preview {name}', { name: sel.label }) }) : h('div', { class: 'empty-state' }, h('b', {}, t('No card')), t('Enable a card to see it here.')),
     h('div', { class: 'preview-actions' }, h('div', { class: 'chips' }, plan.slice(0, 12).map((p) => h('button', {
       class: 'chip', type: 'button', 'aria-pressed': String(sel && p.kind === sel.kind && p.key === sel.key),
       onclick: () => { state.sel.overview = `${p.kind}:${p.key}`; renderView(); },
@@ -360,22 +375,22 @@ function memoryCard() {
   const total = dev?.total || 1, free = dev?.free || 0, used = total - free;
   const C = 2 * Math.PI * 64;
   const frac = Math.min(1, used / total);
-  const donut = h('svg', { class: 'donut', viewBox: '0 0 168 168', role: 'img', 'aria-label': `Mémoire utilisée : ${Math.round(frac * 100)} %` },
+  const donut = h('svg', { class: 'donut', viewBox: '0 0 168 168', role: 'img', 'aria-label': t('Memory used: {pct}%', { pct: Math.round(frac * 100) }) },
     h('circle', { class: 'bg', cx: 84, cy: 84, r: 64 }),
     h('circle', { class: 'fg', cx: 84, cy: 84, r: 64, 'stroke-dasharray': `0 ${C}` }),
-    h('text', { x: 84, y: 90 }, dev?.online ? `${Math.round(frac * 100)} %` : '–'),
-    h('text', { class: 's', x: 84, y: 112 }, 'utilisée'));
+    h('text', { x: 84, y: 90 }, dev?.online ? `${Math.round(frac * 100)}%` : '–'),
+    h('text', { class: 's', x: 84, y: 112 }, t('used')));
   requestAnimationFrame(() => $('.fg', donut)?.setAttribute('stroke-dasharray', `${C * frac} ${C}`));
   const files = (dev?.files || []);
   return h('section', { class: 'card' },
-    h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, "Mémoire de l'écran"), h('p', { class: 'faint' }, 'Les GIF stockés sur le GeekMagic'))),
+    h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Screen memory')), h('p', { class: 'faint' }, t('The GIFs stored on the GeekMagic')))),
     h('div', { class: 'row', style: 'gap:28px;align-items:center;flex-wrap:wrap' }, donut,
       h('div', { class: 'grow' },
-        h('p', {}, h('b', { style: 'font-family:var(--font-display);font-size:24px' }, dev?.online ? `${fmtMo(free)} Mo`: '–'), h('span', { class: 'muted' }, dev?.online ? ` libres sur ${fmtMo(total)} Mo` : ' écran injoignable')),
+        h('p', {}, h('b', { style: 'font-family:var(--font-display);font-size:24px' }, dev?.online ? `${fmtMo(free)} ${t('MB')}`: '–'), h('span', { class: 'muted' }, dev?.online ? t(' free of {total} MB', { total: fmtMo(total) }) : t(' screen unreachable'))),
         h('div', { class: 'files', style: 'margin-top:14px' }, files.map((f) => h('span', { class: 'pill' }, f))))));
 }
 
-/* --- cryptos */
+/* --- crypto */
 function pageCrypto() {
   const cfg = state.cfg, toks = cfg.crypto.tokens;
   if (!state.sel.crypto || !toks.find((t) => t.pair === state.sel.crypto)) state.sel.crypto = toks[0]?.pair || null;
@@ -383,44 +398,44 @@ function pageCrypto() {
   const quotes = {};
   const list = h('div', { class: 'list' });
   const drawList = () => {
-    list.replaceChildren(...toks.map((t, i) => {
-      const sym = t.pair.split('/')[0];
-      const q = quotes[t.pair];
-      return h('div', { class: `item${t.enabled ? '' : ' off'}${state.sel.crypto === t.pair ? ' sel' : ''}`, 'data-i': i },
-        h('button', { class: 'grip', type: 'button', 'aria-label': `Déplacer ${sym}` }, svgIcon('grip', 'ic-fill')),
+    list.replaceChildren(...toks.map((tok, i) => {
+      const sym = tok.pair.split('/')[0];
+      const q = quotes[tok.pair];
+      return h('div', { class: `item${tok.enabled ? '' : ' off'}${state.sel.crypto === tok.pair ? ' sel' : ''}`, 'data-i': i },
+        h('button', { class: 'grip', type: 'button', 'aria-label': t('Move {name}', { name: sym }) }, svgIcon('grip', 'ic-fill')),
         coinAvatar(sym, 'var(--teal)'),
-        h('button', { class: 'grow', type: 'button', style: 'background:none;border:0;text-align:left;padding:0;color:inherit', onclick: () => { state.sel.crypto = t.pair; renderView(); } },
+        h('button', { class: 'grow', type: 'button', style: 'background:none;border:0;text-align:left;padding:0;color:inherit', onclick: () => { state.sel.crypto = tok.pair; renderView(); } },
           h('b', {}, sym, h('span', { class: 'faint' }, ' / USDT')),
-          h('small', { class: q ? (q.change >= 0 ? 'up' : 'down') : '' }, q ? `${fmtPrice(q.price)} $ · ${q.change >= 0 ? '+' : ''}${q.change.toFixed(2).replace('.', ',')} %` : 'Chargement du cours…')),
-        sw(t.enabled, (v) => { t.enabled = v; touch(true); }, `Afficher ${sym}`),
-        h('button', { class: 'icon-btn danger', type: 'button', 'aria-label': `Retirer ${sym}`, onclick: () => { toks.splice(i, 1); touch(true); } }, svgIcon('trash')));
-    }), toks.length ? null : h('div', { class: 'empty-state' }, h('b', {}, 'Aucun token'), 'Ajoutez-en un avec la recherche ci-dessus.'));
+          h('small', { class: q ? (q.change >= 0 ? 'up' : 'down') : '' }, q ? `${fmtPrice(q.price)} $ · ${q.change >= 0 ? '+' : ''}${fmtNum(q.change, 2)}%` : t('Loading price…'))),
+        sw(tok.enabled, (v) => { tok.enabled = v; touch(true); }, t('Show {name}', { name: sym })),
+        h('button', { class: 'icon-btn danger', type: 'button', 'aria-label': t('Remove {name}', { name: sym }), onclick: () => { toks.splice(i, 1); touch(true); } }, svgIcon('trash')));
+    }), toks.length ? null : h('div', { class: 'empty-state' }, h('b', {}, t('No tokens')), t('Add one with the search above.')));
     sortable(list, { itemSel: '.item', gripSel: '.grip', onMove: (f, t) => { moveItem(toks, f, t); touch(true); } });
   };
   drawList();
   api(`/api/crypto/quotes?pairs=${encodeURIComponent(toks.map((t) => t.pair).join(','))}`).then((q) => { Object.assign(quotes, q); drawList(); }).catch(() => {});
   const add = placeSearch({
-    placeholder: 'Ajouter un token : BTC, SOL, LINK…', min: 1,
+    placeholder: t('Add a token: BTC, SOL, LINK…'), min: 1,
     fetcher: (q) => api(`/api/crypto/search?q=${encodeURIComponent(q)}`),
     render: (r) => [h('b', {}, r.symbol), h('span', { class: 'muted' }, `${fmtPrice(r.price)} $`)],
     onPick: (r) => {
-      if (toks.length >= 12) return snack('12 tokens maximum, la mémoire de l’écran est limitée', { err: true });
-      if (toks.some((t) => t.pair === r.pair)) return snack(`${r.symbol} est déjà dans la liste`);
+      if (toks.length >= 12) return snack(t('12 tokens maximum, the screen memory is limited'), { err: true });
+      if (toks.some((t) => t.pair === r.pair)) return snack(t('{symbol} is already in the list', { symbol: r.symbol }));
       toks.push({ pair: r.pair, enabled: true }); state.sel.crypto = r.pair; touch(true);
     },
   });
   const cur = state.sel.crypto && { kind: 'crypto', key: state.sel.crypto, label: state.sel.crypto.split('/')[0] };
   view.append(h('div', { class: 'grid-2' },
     h('div', { class: 'stack' },
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Tokens affichés'), h('p', { class: 'faint' }, `${toks.filter((t) => t.enabled).length} actifs sur ${toks.length}. Glissez pour changer l'ordre.`))), add, h('div', { style: 'height:16px' }), list),
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Créneau d’affichage'), h('p', { class: 'faint' }, 'Les cryptos disparaissent de l’écran hors de ces horaires'))),
-        h('div', { class: 'row', style: 'margin-bottom:16px' }, sw(cfg.schedule.crypto.enabled, (v) => { cfg.schedule.crypto.enabled = v; touch(true); }, 'Afficher les cryptos'), h('span', {}, 'Afficher les cryptos')), slotEditor('crypto'))),
-    h('section', { class: 'card sticky' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, cur ? cur.label : 'Aperçu'), h('p', { class: 'faint' }, 'Card telle qu’envoyée'))),
-      cur ? bezel(previewUrl(cur, { n: state.nonce }), { alt: `Aperçu ${cur.label}` }) : h('div', { class: 'empty-state' }, 'Sélectionnez un token'))));
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Displayed tokens')), h('p', { class: 'faint' }, t('{n} active of {total}. Drag to reorder.', { n: toks.filter((x) => x.enabled).length, total: toks.length })))), add, h('div', { style: 'height:16px' }), list),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Display time slot')), h('p', { class: 'faint' }, t('Crypto cards leave the screen outside these hours')))),
+        h('div', { class: 'row', style: 'margin-bottom:16px' }, sw(cfg.schedule.crypto.enabled, (v) => { cfg.schedule.crypto.enabled = v; touch(true); }, t('Show crypto cards')), h('span', {}, t('Show crypto cards'))), slotEditor('crypto'))),
+    h('section', { class: 'card sticky' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, cur ? cur.label : t('Preview')), h('p', { class: 'faint' }, t('Card as sent')))),
+      cur ? bezel(previewUrl(cur, { n: state.nonce }), { alt: t('Preview {name}', { name: cur.label }) }) : h('div', { class: 'empty-state' }, t('Select a token')))));
   return view;
 }
 
-/* --- météo */
+/* --- weather */
 function pageWeather() {
   const cfg = state.cfg, locs = cfg.weather.locations, W = state.sel.weather;
   if (!W.loc || !locs.find((l) => l.id === W.loc)) W.loc = locs[0]?.id || null;
@@ -437,14 +452,14 @@ function pageWeather() {
     h('span', { class: 'avatar', style: 'background:var(--blue-soft);color:var(--blue);--ring:var(--blue)' }, svgIcon('pin')),
     h('button', { class: 'grow', type: 'button', style: 'background:none;border:0;text-align:left;padding:0;color:inherit', onclick: () => { W.loc = l.id; renderView(); } },
       h('b', {}, l.city), h('small', {}, `${l.lat.toFixed(2)}, ${l.lon.toFixed(2)} · ${l.timezone}`)),
-    sw(l.enabled, (v) => { l.enabled = v; touch(true); }, `Afficher ${l.city}`),
-    h('button', { class: 'icon-btn danger', type: 'button', 'aria-label': `Retirer ${l.city}`, disabled: locs.length < 2, onclick: () => { locs.splice(i, 1); touch(true); } }, svgIcon('trash')),
-    h('select', { class: 'input', style: 'flex:1 1 100%;min-height:44px', 'aria-label': `Scène pour ${l.city}`, onchange: (e) => { l.scene = e.target.value; touch(true); } },
-      h('option', { value: 'auto', selected: l.scene === 'auto' }, 'Scène du jour (automatique)'), state.meta.scenes.map((s) => h('option', { value: s, selected: l.scene === s }, `Toujours : ${SCENE_LABEL[s]}`))))));
+    sw(l.enabled, (v) => { l.enabled = v; touch(true); }, t('Show {name}', { name: l.city })),
+    h('button', { class: 'icon-btn danger', type: 'button', 'aria-label': t('Remove {name}', { name: l.city }), disabled: locs.length < 2, onclick: () => { locs.splice(i, 1); touch(true); } }, svgIcon('trash')),
+    h('select', { class: 'input', style: 'flex:1 1 100%;min-height:44px', 'aria-label': t('Scene for {name}', { name: l.city }), onchange: (e) => { l.scene = e.target.value; touch(true); } },
+      h('option', { value: 'auto', selected: l.scene === 'auto' }, t('Scene of the day (automatic)')), state.meta.scenes.map((s) => h('option', { value: s, selected: l.scene === s }, t('Always: {scene}', { scene: SCENE_LABEL[s] })))))));
   const addLoc = locs.length >= state.meta.max_locations
-    ? h('p', { class: 'faint' }, `${state.meta.max_locations} lieux maximum : chaque lieu ajoute une card d’environ 200 Ko sur l’écran.`)
+    ? h('p', { class: 'faint' }, t('{n} places maximum: each place adds a card of about 200 KB on the screen.', { n: state.meta.max_locations }))
     : placeSearch({
-      placeholder: 'Ajouter un lieu : Montpellier, Lyon…',
+      placeholder: t('Add a place: Paris, Lyon…'),
       fetcher: (q) => api(`/api/geocode?q=${encodeURIComponent(q)}`),
       render: (r) => [h('b', {}, r.city), h('span', { class: 'muted' }, [r.region, r.country].filter(Boolean).join(', '))],
       onPick: (r) => { locs.push({ id: r.city.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) || 'lieu', city: r.city, lat: r.lat, lon: r.lon, timezone: r.timezone, enabled: true, scene: 'auto' }); touch(true); },
@@ -453,94 +468,96 @@ function pageWeather() {
     const on = cfg.weather.scenes_enabled.includes(s);
     const q = new URLSearchParams({ scene: s, fmt: 'png', frame: 6, sample: 'true', bare: 'true', loc: W.loc || '', moment: W.moment || 'APRES-MIDI', cond: W.cond || 'SUN' });
     return h('div', { class: `scene${on ? '' : ' dim'}`, 'aria-pressed': String(W.scene === s) },
-      h('button', { type: 'button', style: 'display:block;width:100%;border:0;padding:0;background:none;text-align:left', 'aria-label': `Prévisualiser ${SCENE_LABEL[s]}`, onclick: () => { W.scene = W.scene === s ? null : s; renderView(); } },
+      h('button', { type: 'button', style: 'display:block;width:100%;border:0;padding:0;background:none;text-align:left', 'aria-label': t('Preview {name}', { name: SCENE_LABEL[s] }), onclick: () => { W.scene = W.scene === s ? null : s; renderView(); } },
         h('img', { src: `/api/preview/weather?${q}`, alt: '', loading: 'lazy', width: 240, height: 240 }),
         h('span', { class: 'cap' }, SCENE_LABEL[s])),
-      h('button', { class: 'tick', type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': `Utiliser ${SCENE_LABEL[s]}`, title: on ? 'Dans la rotation' : 'Exclue',
-        onclick: () => { const arr = cfg.weather.scenes_enabled; const i = arr.indexOf(s); if (i >= 0) { if (arr.length > 1) arr.splice(i, 1); else return snack('Gardez au moins une scène', { err: true }); } else arr.push(s); touch(true); } }, svgIcon(on ? 'check' : 'eye', 'ic-s')));
+      h('button', { class: 'tick', type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': t('Use {name}', { name: SCENE_LABEL[s] }), title: on ? t('In rotation') : t('Excluded'),
+        onclick: () => { const arr = cfg.weather.scenes_enabled; const i = arr.indexOf(s); if (i >= 0) { if (arr.length > 1) arr.splice(i, 1); else return snack(t('Keep at least one scene'), { err: true }); } else arr.push(s); touch(true); } }, svgIcon(on ? 'check' : 'eye', 'ic-s')));
   }));
   const sim = h('section', { class: 'card' },
-    h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Simulateur'), h('p', { class: 'faint' }, 'Voyez la scène à toute heure, par tout temps. Rien n’est enregistré.')),
-      h('button', { class: 'btn btn-ghost btn-s', type: 'button', onclick: () => { Object.assign(W, { moment: null, cond: null, season: null, temp: null, scene: null }); renderView(); } }, svgIcon('refresh', 'ic-s'), 'Réel')),
+    h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Simulator')), h('p', { class: 'faint' }, t('See the scene at any hour, in any weather. Nothing is saved.'))),
+      h('button', { class: 'btn btn-ghost btn-s', type: 'button', onclick: () => { Object.assign(W, { moment: null, cond: null, season: null, temp: null, scene: null }); renderView(); } }, svgIcon('refresh', 'ic-s'), t('Live'))),
     h('div', { class: 'stack' },
-      h('div', { class: 'field' }, h('span', { class: 'label' }, 'Moment de la journée'), chips(MOMENTS, W.moment, (v) => { W.moment = v; renderView(); }, { allowNone: true })),
+      h('div', { class: 'field' }, h('span', { class: 'label' }, t('Time of day')), chips(MOMENTS, W.moment, (v) => { W.moment = v; renderView(); }, { allowNone: true })),
       h('div', { class: 'field' }, h('span', { class: 'label' }, 'Condition'), chips(CONDS, W.cond, (v) => { W.cond = v; renderView(); }, { allowNone: true })),
-      h('div', { class: 'field' }, h('span', { class: 'label' }, 'Saison'), chips(SEASONS, W.season, (v) => { W.season = v; renderView(); }, { allowNone: true })),
-      range({ label: 'Température', min: -10, max: 40, value: W.temp ?? 21, fmt: (v) => `${v}°`, onInput: (v) => { W.temp = v; refresh(); } })));
+      h('div', { class: 'field' }, h('span', { class: 'label' }, t('Season')), chips(SEASONS, W.season, (v) => { W.season = v; renderView(); }, { allowNone: true })),
+      range({ label: t('Temperature'), min: -10, max: 40, value: W.temp ?? 21, fmt: (v) => `${v}°`, onInput: (v) => { W.temp = v; refresh(); } })));
   const cur = locs.find((l) => l.id === W.loc);
   view.append(h('div', { class: 'grid-2' },
     h('div', { class: 'stack' },
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Lieux'), h('p', { class: 'faint' }, 'Chaque lieu actif devient une card avec sa météo réelle'))), addLoc, h('div', { style: 'height:16px' }), locList),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Places')), h('p', { class: 'faint' }, t('Each active place becomes a card with its live weather')))), addLoc, h('div', { style: 'height:16px' }), locList),
       sim,
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Créneau d’affichage'))),
-        h('div', { class: 'row', style: 'margin-bottom:16px' }, sw(cfg.schedule.weather.enabled, (v) => { cfg.schedule.weather.enabled = v; touch(true); }, 'Afficher la météo'), h('span', {}, 'Afficher la météo')), slotEditor('weather'))),
-    h('section', { class: 'card sticky' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, cur ? cur.city : 'Aperçu'), h('p', { class: 'faint' }, W.scene ? `Scène : ${SCENE_LABEL[W.scene]}` : 'Scène du jour'))),
-      cur ? (prev = bezel(`/api/preview/weather?${simParams({ scene: W.scene || '', n: state.nonce })}`, { alt: `Aperçu météo ${cur.city}` })) : h('div', { class: 'empty-state' }, 'Ajoutez un lieu'),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Display time slot')))),
+        h('div', { class: 'row', style: 'margin-bottom:16px' }, sw(cfg.schedule.weather.enabled, (v) => { cfg.schedule.weather.enabled = v; touch(true); }, t('Show weather')), h('span', {}, t('Show weather'))), slotEditor('weather'))),
+    h('section', { class: 'card sticky' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, cur ? cur.city : t('Preview')), h('p', { class: 'faint' }, W.scene ? t('Scene: {scene}', { scene: SCENE_LABEL[W.scene] }) : t('Scene of the day')))),
+      cur ? (prev = bezel(`/api/preview/weather?${simParams({ scene: W.scene || '', n: state.nonce })}`, { alt: t('Weather preview {name}', { name: cur.city }) })) : h('div', { class: 'empty-state' }, t('Add a place')),
       locs.length > 1 ? h('div', { class: 'preview-actions' }, h('div', { class: 'chips' }, locs.map((l) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(l.id === W.loc), onclick: () => { W.loc = l.id; renderView(); } }, l.city)))) : null)));
-  view.append(h('section', { class: 'card', style: 'margin-top:24px' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Scènes du quotidien'), h('p', { class: 'faint' }, 'Une scène par jour parmi celles cochées, choisie selon le temps. Touchez une vignette pour la voir dans l’aperçu, cochez pour l’inclure.'))), sceneGrid));
+  view.append(h('section', { class: 'card', style: 'margin-top:24px' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Everyday scenes')), h('p', { class: 'faint' }, t('One scene per day among the checked ones, chosen by the weather. Tap a thumbnail to see it in the preview, tick it to include it.')))), sceneGrid));
   return view;
 }
 
-/* --- horloge */
+/* --- clock */
 function pageClock() {
   const cfg = state.cfg, c = cfg.clock;
   const view = h('div', { class: 'enter' });
   let prev;
   const url = () => `/api/preview/clock?${new URLSearchParams({ effect: c.effect, tz: c.timezone, show_weather: c.show_weather, loc: c.location, ns: c.night_start, ne: c.night_end, n: Date.now() })}`;
   const replay = debounce(() => prev?.setImage(url()), 350);
-  const hourLabel = (v) => `${String(v).padStart(2, '0')} h`;
+  const hourLabel = (v) => `${String(v).padStart(2, '0')}:00`;
   view.append(h('div', { class: 'grid-2' },
     h('div', { class: 'stack' },
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Affichage'), h('p', { class: 'faint' }, 'Tuiles à volets, date et météo comme sur un HTC Sense'))),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Display')), h('p', { class: 'faint' }, t('Flip tiles, date and weather like on an HTC Sense')))),
         h('div', { class: 'stack' },
-          h('div', { class: 'field' }, h('label', { for: 'tz' }, 'Fuseau horaire'),
+          h('div', { class: 'field' }, h('label', { for: 'tz' }, t('Time zone')),
             h('select', { class: 'input', id: 'tz', onchange: (e) => { c.timezone = e.target.value; touch(); replay(); } }, [...new Set([c.timezone, ...ZONES])].map((z) => h('option', { value: z, selected: z === c.timezone }, z.replace('_', ' '))))),
-          h('div', { class: 'row' }, sw(c.show_weather, (v) => { c.show_weather = v; touch(true); }, 'Météo sous l’horloge'), h('div', { class: 'grow' }, h('b', {}, 'Météo sous l’horloge'), h('p', { class: 'faint' }, 'Température et ciel animé en bas de la card'))),
-          c.show_weather ? h('div', { class: 'field' }, h('label', { for: 'cl' }, 'Lieu de la météo'), h('select', { class: 'input', id: 'cl', onchange: (e) => { c.location = e.target.value; touch(); replay(); } }, cfg.weather.locations.map((l) => h('option', { value: l.id, selected: l.id === c.location }, l.city)))) : null)),
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Effet d’entrée'), h('p', { class: 'faint' }, 'Joué une fois quand la card apparaît, puis l’heure reste fixe'))),
+          h('div', { class: 'row' }, sw(c.show_weather, (v) => { c.show_weather = v; touch(true); }, t('Weather under the clock')), h('div', { class: 'grow' }, h('b', {}, t('Weather under the clock')), h('p', { class: 'faint' }, t('Temperature and animated sky at the bottom of the card')))),
+          c.show_weather ? h('div', { class: 'field' }, h('label', { for: 'cl' }, t('Weather place')), h('select', { class: 'input', id: 'cl', onchange: (e) => { c.location = e.target.value; touch(); replay(); } }, cfg.weather.locations.map((l) => h('option', { value: l.id, selected: l.id === c.location }, l.city)))) : null)),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Entry effect')), h('p', { class: 'faint' }, t('Played once when the card appears, then the time stays still')))),
         chips(state.meta.effects.map((e) => [e, EFFECT_LABEL[e]]), c.effect, (v) => { c.effect = v; touch(true); })),
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Mode nuit'), h('p', { class: 'faint' }, 'Chiffres plus doux pendant ces heures'))),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Night mode')), h('p', { class: 'faint' }, t('Softer digits during these hours')))),
         h('div', { class: 'stack' },
-          range({ label: 'Début', min: 0, max: 23, value: c.night_start, fmt: hourLabel, onInput: (v) => { c.night_start = v; touch(); replay(); } }),
-          range({ label: 'Fin', min: 0, max: 23, value: c.night_end, fmt: hourLabel, onInput: (v) => { c.night_end = v; touch(); replay(); } }))),
-      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Créneau d’affichage'))),
-        h('div', { class: 'row', style: 'margin-bottom:16px' }, sw(cfg.schedule.clock.enabled, (v) => { cfg.schedule.clock.enabled = v; touch(true); }, 'Afficher l’horloge'), h('span', {}, 'Afficher l’horloge')), slotEditor('clock'))),
-    h('section', { class: 'card sticky' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Aperçu'), h('p', { class: 'faint' }, 'Lecture unique, comme sur l’écran'))),
-      (prev = bezel(url(), { alt: 'Aperçu horloge' })),
-      h('div', { class: 'preview-actions' }, h('button', { class: 'btn btn-s', type: 'button', onclick: () => prev.setImage(url()) }, svgIcon('play', 'ic-s'), 'Rejouer')))));
+          range({ label: t('Start'), min: 0, max: 23, value: c.night_start, fmt: hourLabel, onInput: (v) => { c.night_start = v; touch(); replay(); } }),
+          range({ label: t('End'), min: 0, max: 23, value: c.night_end, fmt: hourLabel, onInput: (v) => { c.night_end = v; touch(); replay(); } }))),
+      h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Display time slot')))),
+        h('div', { class: 'row', style: 'margin-bottom:16px' }, sw(cfg.schedule.clock.enabled, (v) => { cfg.schedule.clock.enabled = v; touch(true); }, t('Show clock')), h('span', {}, t('Show clock'))), slotEditor('clock'))),
+    h('section', { class: 'card sticky' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Preview')), h('p', { class: 'faint' }, t('Plays once, like on the screen')))),
+      (prev = bezel(url(), { alt: t('Clock preview') })),
+      h('div', { class: 'preview-actions' }, h('button', { class: 'btn btn-s', type: 'button', onclick: () => prev.setImage(url()) }, svgIcon('play', 'ic-s'), t('Replay'))))));
   return view;
 }
 
-/* --- écran & planning */
+/* --- screen & schedule */
 function pageScreen() {
   const cfg = state.cfg, d = cfg.device;
   const view = h('div', { class: 'enter stack' });
   const result = h('div', { class: 'row', style: 'margin-top:14px;flex-wrap:wrap' });
   const ip = h('input', { class: 'input', id: 'ip', value: d.ip, inputmode: 'decimal', autocomplete: 'off', oninput: (e) => { d.ip = e.target.value.trim(); touch(); } });
   const test = async () => {
-    result.replaceChildren(h('span', { class: 'pill' }, 'Test en cours…'));
+    result.replaceChildren(h('span', { class: 'pill' }, t('Testing…')));
     try {
       const r = await api('/api/device/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip: d.ip }) });
-      result.replaceChildren(r.online ? h('span', { class: 'pill ok' }, svgIcon('wifi', 'ic-s'), 'Écran joignable') : h('span', { class: 'pill ko' }, svgIcon('alert', 'ic-s'), 'Aucune réponse à cette adresse'),
-        r.online ? h('span', { class: 'pill' }, `${fmtMo(r.free)} Mo libres`) : null);
+      result.replaceChildren(r.online ? h('span', { class: 'pill ok' }, svgIcon('wifi', 'ic-s'), t('Screen reachable')) : h('span', { class: 'pill ko' }, svgIcon('alert', 'ic-s'), t('No response at this address')),
+        r.online ? h('span', { class: 'pill' }, t('{n} MB free', { n: fmtMo(r.free) })) : null);
     } catch (e) { result.replaceChildren(h('span', { class: 'pill ko' }, e.message)); }
   };
   view.append(
-    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Connexion'), h('p', { class: 'faint' }, 'Adresse de l’écran sur votre réseau. Si elle change, relancez la recherche : python scripts/find_device.py'))),
-      h('div', { class: 'row', style: 'align-items:flex-end;flex-wrap:wrap' }, h('div', { class: 'field grow', style: 'max-width:320px' }, h('label', { for: 'ip' }, 'Adresse IP'), ip), h('button', { class: 'btn', type: 'button', onclick: test }, svgIcon('wifi'), 'Tester la connexion')), result),
-    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Rythme'), h('p', { class: 'faint' }, 'Fréquence de mise à jour des cours et de la météo. L’horloge se met à jour chaque minute.'))),
+    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Language')), h('p', { class: 'faint' }, t('Language of this interface and of the texts shown on the screen')))),
+      chips([['en', 'English'], ['fr', 'Français']], cfg.language, async (v) => { cfg.language = v; await save(); location.reload(); })),
+    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Connection')), h('p', { class: 'faint' }, t('Address of the screen on your network. If it changes, rerun the search: python scripts/find_device.py')))),
+      h('div', { class: 'row', style: 'align-items:flex-end;flex-wrap:wrap' }, h('div', { class: 'field grow', style: 'max-width:320px' }, h('label', { for: 'ip' }, t('IP address')), ip), h('button', { class: 'btn', type: 'button', onclick: test }, svgIcon('wifi'), t('Test connection'))), result),
+    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Pace')), h('p', { class: 'faint' }, t('How often prices and weather are refreshed. The clock updates every minute.')))),
       chips([[3, '3 min'], [5, '5 min'], [9, '9 min'], [15, '15 min'], [30, '30 min'], [60, '1 h']], d.refresh_minutes, (v) => { d.refresh_minutes = v; touch(true); }),
-      h('p', { class: 'faint', style: 'margin-top:12px' }, 'La tâche Windows s’exécute toutes les 9 minutes : une cadence plus lente est respectée, une plus rapide est limitée à 9 minutes.')),
-    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, 'Cards et créneaux'), h('p', { class: 'faint' }, 'Chaque card peut avoir plusieurs plages horaires'))), timeline(),
+      h('p', { class: 'faint', style: 'margin-top:12px' }, t('The Windows task runs every 9 minutes: a slower pace is honored, a faster one is capped at 9 minutes.'))),
+    h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('div', {}, h('h2', {}, t('Cards and time slots')), h('p', { class: 'faint' }, t('Each card can have several time ranges')))), timeline(),
       h('div', { class: 'stack', style: 'margin-top:28px' }, state.cfg.schedule.order.map((k) => h('div', { class: 'item', style: 'align-items:flex-start;padding:18px;flex-direction:column' },
         h('div', { class: 'row', style: 'width:100%' }, h('span', { class: 'avatar', style: `background:${KIND[k].color}22;color:${KIND[k].color};--ring:${KIND[k].color}` }, svgIcon(KIND[k].icon)), h('div', { class: 'grow' }, h('b', {}, KIND[k].label), h('small', {}, KIND[k].sub)),
-          sw(cfg.schedule[k].enabled, (v) => { cfg.schedule[k].enabled = v; touch(true); }, `Afficher ${KIND[k].label}`)),
+          sw(cfg.schedule[k].enabled, (v) => { cfg.schedule[k].enabled = v; touch(true); }, t('Show {name}', { name: KIND[k].label }))),
         h('div', { style: 'padding-left:62px;width:100%' }, slotEditor(k)))))),
     memoryCard());
   return view;
 }
 
-/* ----------------------------------------------------------------- routage */
+/* ----------------------------------------------------------------- routing */
 
 function renderView() {
   const page = PAGES[state.route] || PAGES.overview;
@@ -555,7 +572,7 @@ function renderChrome() {
   const dev = state.status?.device;
   const dot = $('#rail-dot');
   dot.className = `dot ${dev ? (dev.online ? 'ok' : 'ko') : ''}`;
-  $('#rail-status').title = dev ? (dev.online ? `Écran en ligne (${dev.ip})` : `Écran injoignable (${dev.ip})`) : 'État inconnu';
+  $('#rail-status').title = dev ? (dev.online ? t('Screen online ({ip})', { ip: dev.ip }) : t('Screen unreachable ({ip})', { ip: dev.ip })) : t('Unknown state');
 }
 function touch(structural = false) {
   syncDirtyBar();
@@ -569,7 +586,7 @@ async function refreshStatus() {
     renderChrome();
     if (state.route === 'overview' || state.route === 'screen') { const y = scrollY; renderView(); scrollTo(0, y); }
     renderSide();
-  } catch { /* serveur indisponible : on réessaiera */ }
+  } catch { /* server unavailable: retry later */ }
 }
 function route() {
   state.route = (location.hash.replace(/^#\/?/, '') || 'overview').split('?')[0];
@@ -583,7 +600,7 @@ async function boot() {
   try {
     [state.cfg, state.meta] = await Promise.all([api('/api/config'), api('/api/meta')]);
   } catch (e) {
-    $('#view').replaceChildren(h('div', { class: 'card empty-state' }, h('b', {}, 'Serveur injoignable'), e.message));
+    $('#view').replaceChildren(h('div', { class: 'card empty-state' }, h('b', {}, t('Server unreachable')), e.message));
     return;
   }
   state.saved = JSON.stringify(state.cfg);

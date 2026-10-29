@@ -83,14 +83,13 @@ def main() -> int:
 
     OUTPUT.parent.mkdir(exist_ok=True)
     draw_test_frame().convert("RGB").save(OUTPUT, quality=90)
-    print(f"[+] Image de test générée : {OUTPUT}")
+    print(f"[+] Test image generated: {OUTPUT}")
 
     client = GeekMagicClient(ip, timeout=8)
     if not client.reachable():
-        print(f"[!] Écran injoignable sur {ip}")
-        print(f"    IP locale du PC : {local_ip()}")
-        print("    -> Vérifiez que le PC et l'écran sont sur le MÊME réseau"
-              " (même sous-réseau requis).")
+        print(f"[!] Screen unreachable at {ip}")
+        print(f"    Local IP of this PC: {local_ip()}")
+        print("    -> Check that the PC and the screen are on the SAME network (same subnet required).")
         return 1
 
     try:
@@ -100,10 +99,10 @@ def main() -> int:
         client.set_album(autoplay=True, interval_s=60)  # fondu seulement à chaque refresh
         client.push_image(str(OUTPUT), name="dashboard_test.jpg")
     except GeekMagicError as exc:
-        print(f"[!] Échec : {exc}")
+        print(f"[!] Failed: {exc}")
         return 1
 
-    print(f"[+] Envoyé sur {ip} — visible à l'écran d'ici ~5 s (cycle album).")
+    print(f"[+] Sent to {ip}: visible on the screen within ~5 s (album cycle).")
     return 0
 
 
