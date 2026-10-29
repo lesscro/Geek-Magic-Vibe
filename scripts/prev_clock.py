@@ -27,4 +27,5 @@ for i, (st, ww, night) in enumerate([(2, w, False), (4, w, False), (12, w, False
     f = render.new_frame()
     render.draw_clock_card(f, 13, 40, st, now=now, prev=(13, 39), night=night, w=ww)
     m.paste(f, (240 * i, 0))
+(ROOT / "output").mkdir(exist_ok=True)
 m.save(ROOT / "output" / "clock_new.png")

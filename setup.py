@@ -61,6 +61,8 @@ def main() -> int:
         print(f"[!] Python 3.11 ou plus requis (version actuelle : {sys.version.split()[0]}).")
         return 1
     print("Geek Magic Vibe : installation")
+    for d in ("output", "logs"):
+        (ROOT / d).mkdir(exist_ok=True)
 
     step(1, total, "Environnement virtuel (.venv)")
     if not PY.exists():

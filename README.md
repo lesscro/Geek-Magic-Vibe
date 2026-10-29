@@ -47,8 +47,9 @@ Si l'écran n'est pas trouvé, saisissez son IP dans le backoffice (page Écran 
 Deux tâches planifiées Windows :
 
 ```bash
-schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "pythonw \"C:\chemin\geekmagic-dashboard\scripts\refresh_all.py\""
-schtasks /Create /SC MINUTE /MO 1 /TN GeekMagicClock /TR "pythonw \"C:\chemin\geekmagic-dashboard\scripts\send_clock.py\""
+# déjà fait par l'installateur ; à la main (adaptez le chemin) :
+schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "\"C:\chemin\.venv\Scripts\pythonw.exe\" \"C:\chemin\scriptsefresh_all.py\""
+schtasks /Create /SC MINUTE /MO 1 /TN GeekMagicClock /TR "\"C:\chemin\.venv\Scripts\pythonw.exe\" \"C:\chemin\scripts\send_clock.py\""
 ```
 
 `refresh_all.py` met à jour cryptos et météo selon la cadence et les créneaux du backoffice ; `send_clock.py` garde l'horloge à l'heure. Un verrou (`logs/device.lock`) évite que deux envois se chevauchent.

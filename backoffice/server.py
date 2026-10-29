@@ -32,6 +32,8 @@ from geekmagic.client import GeekMagicClient, GeekMagicError  # noqa: E402
 from scripts import send_clock, send_tokens, send_weather  # noqa: E402
 
 PORT = 8780
+(ROOT / "output").mkdir(exist_ok=True)
+(ROOT / "logs").mkdir(exist_ok=True)
 STATIC = Path(__file__).resolve().parent / "static"
 UA = {"User-Agent": "Mozilla/5.0 (geekmagic-backoffice)"}
 
