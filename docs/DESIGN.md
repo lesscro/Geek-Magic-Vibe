@@ -24,4 +24,4 @@ Toutes les boucles sont fermées (sinus, ping-pong, défilement modulo) pour év
 
 ## Backoffice
 
-Contexte produit dans `PRODUCT.md`. Cockpit sombre, Material 3 Expressive : formes très arrondies, teintes neutres tirées vers le bleu nuit, ambre en action principale, aperçu fidèle avant chaque envoi.
+Contexte produit dans `docs/PRODUCT.md`. Cockpit sombre, Material 3 Expressive : formes très arrondies, teintes neutres tirées vers le bleu nuit, ambre en action principale, aperçu fidèle avant chaque envoi.

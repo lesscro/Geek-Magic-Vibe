@@ -1,6 +1,6 @@
 # Geek Magic Vibe
 
-Dashboard pixel art 240x240 pour écran GeekMagic (HTTP local uniquement), piloté par Python, avec backoffice FastAPI. Voir `README.md` et `DESIGN.md`.
+Dashboard pixel art 240x240 pour écran GeekMagic (HTTP local uniquement), piloté par Python, avec backoffice FastAPI. Voir `README.md` et `docs/DESIGN.md`.
 
 ## Règles de travail
 

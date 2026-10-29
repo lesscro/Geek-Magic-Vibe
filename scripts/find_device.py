@@ -1,6 +1,7 @@
 """Scanne le réseau local pour retrouver le GeekMagic (réponse caractéristique /spaces.json).
 
 Usage : python scripts/find_device.py [--subnet 192.168.1] [--port 80]
+(sans --subnet : sous-réseau du PC détecté automatiquement)
 """
 
 from __future__ import annotations
@@ -47,30 +48,43 @@ def scan(subnet: str, port: int, timeout: float = 1.5) -> list[str]:
     return sorted(found, key=lambda ip: int(ip.rsplit(".", 1)[1]))
 
 
+def local_subnet() -> str | None:
+    """3 premiers octets de l'IP locale du PC (sous-réseau probable de l'écran)."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect(("8.8.8.8", 80))            # aucun paquet envoyé : sert à choisir l'interface
+            return sock.getsockname()[0].rsplit(".", 1)[0]
+    except OSError:
+        return None
+
+
+def find(subnet: str | None = None, port: int = 80) -> list[str]:
+    subnet = subnet or local_subnet() or "192.168.1"
+    print(f"Scan de {subnet}.1-254 sur le port {port}...")
+    return scan(subnet, port)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--subnet", default="192.168.1", help="3 premiers octets (défaut 192.168.1)")
+    ap.add_argument("--subnet", default=None, help="3 premiers octets (défaut : sous-réseau du PC)")
     ap.add_argument("--port", type=int, default=80)
     args = ap.parse_args()
 
-    print(f"Scan de {args.subnet}.1-254 sur le port {args.port}...")
-    hits = scan(args.subnet, args.port)
+    hits = find(args.subnet, args.port)
     if not hits:
-        print("[!] Aucun serveur JSON trouvé. L'écran est-il bien connecté à ce réseau ?")
+        print("[!] Aucun écran trouvé. Est-il allumé et sur le même réseau que ce PC ?")
         return 1
 
     print(f"[+] Candidats GeekMagic : {', '.join(hits)}")
     if len(hits) == 1:
-        ip = hits[0]
-        print(f"[+] Écran trouvé : {ip}")
-        cfg_path = ROOT / "config.json"
-        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
-        cfg["device_ip"] = ip
-        cfg_path.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        print(f"[+] config.json mis à jour (device_ip = {ip}). Lancez scripts/send_test.py.")
+        sys.path.insert(0, str(ROOT))
+        from geekmagic import settings
+        cfg = settings.load()
+        cfg["device"]["ip"] = hits[0]
+        settings.save(cfg)
+        print(f"[+] Écran trouvé : {hits[0]} (enregistré dans config.json)")
     else:
-        print("→ Plusieurs candidats : ouvrez http://<IP>/spaces.json dans un navigateur")
-        print("  pour identifier l'écran, puis mettez à jour config.json.")
+        print("-> Plusieurs candidats : renseignez la bonne adresse dans le backoffice (Écran et planning).")
     return 0
 
 

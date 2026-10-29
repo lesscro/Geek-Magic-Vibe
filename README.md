@@ -10,23 +10,41 @@ Dashboard pixel art pour écran **GeekMagic** (240x240, firmware GeekMagicClock 
 - **Météo** : une scène pixel art plein cadre par lieu, qui change chaque jour parmi 12 décors du quotidien (ville, café, marché, pont, parc, aire de jeux, pique-nique, lac, montagnes, ferme, port, plage) et s'adapte au moment de la journée, à la météo et à la saison. Données Open-Meteo, aucune clé.
 - **Horloge** style HTC Sense : tuiles à volets, date, météo animée dessous, effet d'entrée aléatoire.
 
-## Démarrage rapide (Windows)
+## Installation en 3 étapes (Windows)
 
-Prérequis : Python 3.11+, l'écran et le PC sur le même réseau local.
+Prérequis : [Python 3.11+](https://www.python.org/downloads/) (cochez « Add Python to PATH »), Git, et l'écran allumé sur le même réseau Wi-Fi ou Ethernet que le PC.
 
 ```bash
-pip install -r requirements.txt
-python scripts/setup_fonts.py              # polices pixel libres (OFL), 1re fois
-copy config.example.json config.json       # puis renseignez l'IP de l'écran
-python scripts/find_device.py --subnet 192.168.1   # retrouve l'écran et met config.json à jour
-python scripts/send_test.py                # affiche "TEST OK" sur l'écran
+git clone https://github.com/lesscro/Geek-Magic-Vibe.git
+cd Geek-Magic-Vibe
+Installer.bat          # ou : python setup.py
 ```
 
-Backoffice : double-cliquez sur `Lancer le backoffice.bat` (ou `python backoffice/server.py`), puis ouvrez http://localhost:8780. Il écoute aussi sur le réseau local (téléphone) et n'a **pas d'authentification** : ne l'exposez pas sur Internet.
+L'installateur fait tout : environnement virtuel, dépendances, polices pixel libres, `config.json`, recherche automatique de l'écran sur le réseau, et (si vous acceptez) les tâches planifiées de mise à jour. À la fin, il propose d'ouvrir le backoffice.
+
+Ensuite, au quotidien : double-clic sur **`Lancer le backoffice.bat`**, puis http://localhost:8780. Réglez vos tokens, lieux et créneaux, vérifiez l'aperçu, cliquez sur **Envoyer sur l'écran**.
+
+macOS et Linux : `python setup.py --no-scan` puis `.venv/bin/python backoffice/server.py` (les tâches planifiées sont propres à Windows).
+
+Si l'écran n'est pas trouvé, saisissez son IP dans le backoffice (page Écran et planning), ou lancez `python scripts/find_device.py`. L'écran doit être sur le même sous-réseau que le PC.
+
+## À quoi sert chaque élément
+
+| Élément | Rôle |
+|---|---|
+| `Installer.bat`, `setup.py` | Installation guidée, à lancer une fois. |
+| `Lancer le backoffice.bat` | Démarre le serveur local et ouvre l'interface. |
+| `config.example.json` | Modèle de configuration. `config.json` (votre copie, jamais versionnée) contient votre IP, vos tokens et vos lieux. |
+| `backoffice/` | L'interface web de réglage (serveur FastAPI + page HTML/JS). |
+| `geekmagic/` | Le moteur : dessin des cards, scènes météo, horloge, envoi vers l'écran. |
+| `scripts/` | Commandes : envoi des cards, mise à jour automatique, recherche de l'écran, test, polices. |
+| `fonts/`, `output/`, `logs/`, `.venv/` | Créés à l'installation ou à l'usage, non versionnés. |
+| `docs/` | Notes de conception (`DESIGN.md`, `PRODUCT.md`). |
+| `CLAUDE.md` | Consignes pour qui développe avec Claude Code (facultatif, sans effet sur l'usage). |
 
 ## Mise à jour automatique
 
-Deux tâches planifiées Windows (exemples) :
+Deux tâches planifiées Windows :
 
 ```bash
 schtasks /Create /SC MINUTE /MO 9 /TN GeekMagicDashRefresh /TR "pythonw \"C:\chemin\geekmagic-dashboard\scripts\refresh_all.py\""
@@ -51,6 +69,7 @@ geekmagic/
   scenes.py        moteur de scènes (ciel, particules, acteurs)
   places*.py       les 12 lieux ; transitions.py : effets d'entrée
 scripts/           send_*.py, refresh_all.py, find_device.py, setup_fonts.py
+setup.py           installation guidée
 ```
 
 ## Ce qu'il faut savoir sur le matériel
