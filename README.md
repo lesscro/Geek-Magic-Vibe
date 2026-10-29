@@ -4,6 +4,12 @@ Dashboard pixel art pour écran **GeekMagic** (240x240, firmware GeekMagicClock 
 
 *English: a pixel-art dashboard generator and local web backoffice for GeekMagic 240x240 smart displays (crypto cards, animated weather scenes, HTC Sense style clock). Not affiliated with GeekMagic.*
 
+## Mini écrans
+
+Rendu réel des cards sur l'écran 240x240 (animations en boucle) :
+
+<table><tr><td align="center"><img src="docs/screenshots/anim/crypto-btc.gif" width="200" alt="Crypto : BTC"><br><sub>Crypto : BTC</sub></td><td align="center"><img src="docs/screenshots/anim/meteo-ville.gif" width="200" alt="Ville, plein jour"><br><sub>Ville, plein jour</sub></td><td align="center"><img src="docs/screenshots/anim/meteo-cafe-nuit.gif" width="200" alt="Café, de nuit"><br><sub>Café, de nuit</sub></td><td align="center"><img src="docs/screenshots/anim/meteo-parc-neige.gif" width="200" alt="Parc sous la neige"><br><sub>Parc sous la neige</sub></td></tr><tr><td align="center"><img src="docs/screenshots/anim/meteo-port-pluie.gif" width="200" alt="Port sous la pluie"><br><sub>Port sous la pluie</sub></td><td align="center"><img src="docs/screenshots/anim/meteo-plage.gif" width="200" alt="Plage au soleil"><br><sub>Plage au soleil</sub></td><td align="center"><img src="docs/screenshots/anim/meteo-pont-crepuscule.gif" width="200" alt="Pont au crépuscule"><br><sub>Pont au crépuscule</sub></td><td align="center"><img src="docs/screenshots/anim/horloge.gif" width="200" alt="Horloge HTC Sense"><br><sub>Horloge HTC Sense</sub></td></tr></table>
+
 ## Ce que ça affiche
 
 - **Cryptos** : une card animée par token (pièce, variation 24 h, prix, sparkline réelle en fond, plus bas et plus haut du jour). Données Binance, secours CoinGecko.
@@ -24,13 +30,15 @@ Les cards telles qu'elles s'affichent sur l'écran (agrandies x2) :
 
 Le backoffice :
 
+![Backoffice, vue d'ensemble](docs/screenshots/backoffice-vue-ensemble.png)
+
 ![Backoffice, cryptos](docs/screenshots/backoffice-cryptos.png)
 
 ![Backoffice, météo et simulateur](docs/screenshots/backoffice-meteo.png)
 
 ![Backoffice, horloge](docs/screenshots/backoffice-horloge.png)
 
-Pour régénérer les captures des cards : `python scripts/make_screenshots.py`.
+Pour régénérer les captures et les mini écrans : `python scripts/make_screenshots.py` puis `python scripts/make_screenshots.py --gifs`.
 
 ## Installation en 3 étapes (Windows)
 

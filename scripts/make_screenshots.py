@@ -3,7 +3,8 @@
 Données neutres : météo d'exemple (Paris), cours réels Binance (repli : aucun
 snapshot crypto si le réseau manque). Aucune donnée personnelle.
 
-Usage : python scripts/make_screenshots.py
+Usage : python scripts/make_screenshots.py          # captures PNG des cards
+        python scripts/make_screenshots.py --gifs   # mini écrans animés
 """
 
 from __future__ import annotations
@@ -49,7 +50,48 @@ def strip(images: list[Image.Image]) -> Image.Image:
     return sheet
 
 
+def gifs() -> None:
+    """Mini écrans animés (GIF 240x240, boucle) pour le README -> docs/screenshots/anim/."""
+    from geekmagic import scenes, sprites, transitions
+
+    anim = OUT / "anim"
+    anim.mkdir(parents=True, exist_ok=True)
+
+    def write(name: str, frames: list[Image.Image], ms, colors: int, loop: bool = True) -> None:
+        q = [f.quantize(colors=colors, method=Image.MEDIANCUT) for f in frames]
+        kw = {"loop": 0} if loop else {}
+        q[0].save(anim / name, save_all=True, append_images=q[1:], duration=ms, optimize=False, **kw)
+        print(f"[+] anim/{name} ({(anim / name).stat().st_size // 1024} Ko)")
+
+    try:
+        snap = data.get_market("BTC/USDT")
+        write("crypto-btc.gif", [card(render.draw_token_card, snap, st) for st in range(sprites.ROTATION_FRAMES)], 90, 64)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[!] crypto : {exc}")
+
+    cases = {
+        "meteo-ville.gif": ("city", {}),
+        "meteo-cafe-nuit.gif": ("cafe", dict(icon="MOON", phase="NUIT", hour=22.5, is_day=False, temp=11)),
+        "meteo-parc-neige.gif": ("park", dict(icon="SNOW", code=73, temp=-1, season="WINTER", phase="JOURNEE", hour=11)),
+        "meteo-port-pluie.gif": ("harbor", dict(icon="RAIN", code=63, temp=12, season="AUTUMN", phase="MATIN", hour=9)),
+        "meteo-plage.gif": ("beach", dict(icon="SUN", temp=27)),
+        "meteo-pont-crepuscule.gif": ("bridge", dict(phase="CREPUSCULE", hour=19.8, season="AUTUMN", temp=16)),
+    }
+    for name, (place, kw) in cases.items():
+        w = sample(**kw)
+        write(name, [card(render.draw_weather_card, w, st, place=place) for st in range(scenes.N)], 110, 112)
+
+    now = datetime(2026, 6, 15, 14, 32)
+    frames = [card(render.draw_clock_card, 14, 32, st, now=now, prev=(14, 31), w=sample()) for st in range(scenes.N)]
+    intro, _ = transitions.intro_frames(frames[0], n=6, effect="slide_up")
+    seq = intro + frames
+    write("horloge.gif", seq, [60] * 6 + [100] * (len(frames) - 1) + [1800], 96)
+
+
 def main() -> int:
+    if "--gifs" in sys.argv:
+        gifs()
+        return 0
     crypto = []
     for pair in ("BTC/USDT", "ETH/USDT", "SOL/USDT"):
         try:
